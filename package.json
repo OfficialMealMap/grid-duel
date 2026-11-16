@@ -1,0 +1,21 @@
+{
+  "name": "grid-duel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grid Duel: a tactical duel on a 5x4 grid, with private online matches.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "start": "node server/index.js",
+    "dev": "node build.js && node server/index.js"
+  },
+  "dependencies": {
+    "esbuild": "^0.24.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.18.0"
+  }
+}
