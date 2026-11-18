@@ -24,6 +24,80 @@ const ROOM_IDLE_MS = 60 * 60_000; // empty or finished rooms are cleared after a
 const AUTO_BEAT_MS = 380; // pace of a timed-out player's automatic move
 const MAX_ROOMS = 5000;
 
+/* --------------------------------------------------------------- supabase
+   Accounts and stats live in Supabase. The URL and publishable key are safe
+   to share with browsers. The secret key is not: set SUPABASE_SECRET_KEY in
+   the host's environment. Without it the game still runs, but results are
+   not saved. */
+const SUPABASE_URL = (process.env.SUPABASE_URL || "https://jlgwyvtfylnrxmuggesy.supabase.co").replace(/\/+$/, "");
+const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_qEXFLH4XpMY5g8oC7DH0fA_teOcw58A";
+const SUPABASE_SECRET = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+async function sb(pathname, { key = SUPABASE_KEY, bearer, method = "GET", body } = {}) {
+  // New-style keys (sb_...) go in the apikey header only. A signed-in player's
+  // token, or an old-style JWT key, also goes in Authorization.
+  const headers = { apikey: key, "content-type": "application/json" };
+  if (bearer) headers.authorization = `Bearer ${bearer}`;
+  else if (key.startsWith("eyJ")) headers.authorization = `Bearer ${key}`;
+  const res = await fetch(SUPABASE_URL + pathname, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(6000),
+  });
+  if (!res.ok) throw new Error(`supabase ${res.status}`);
+  return res.json();
+}
+
+/* Turn a browser's sign-in token into { id, name }, or null for a guest. */
+async function resolveUser(accessToken) {
+  if (!accessToken || typeof accessToken !== "string" || accessToken.length > 4096) return null;
+  try {
+    const user = await sb("/auth/v1/user", { bearer: accessToken });
+    if (!user || !/^[0-9a-f-]{36}$/i.test(user.id || "")) return null;
+    const rows = await sb(`/rest/v1/profiles?id=eq.${user.id}&select=username,rating`, { bearer: accessToken });
+    if (!rows[0]) return null;
+    return { id: user.id, name: rows[0].username, rating: rows[0].rating };
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Save a finished match and update both players' stats. */
+async function recordResult(room) {
+  if (!SUPABASE_SECRET || room.recorded || !room.result || !bothSeated(room)) return;
+  const u1 = room.seats[1].user, u2 = room.seats[2].user;
+  if (!u1 && !u2) return;
+  room.recorded = true;
+  const matchNo = room.matchNo;
+  try {
+    const out = await sb("/rest/v1/rpc/record_match", {
+      key: SUPABASE_SECRET,
+      method: "POST",
+      body: {
+        p_room: room.code,
+        p_solaris: u1 ? u1.id : null,
+        p_noctis: u2 ? u2.id : null,
+        p_winner_side: room.result.winner,
+        p_reason: room.result.reason,
+        p_rounds: room.round,
+        p_eclipse: room.eclipse,
+        p_started_at: new Date(room.startedAt || Date.now()).toISOString(),
+      },
+    });
+    if (out && rooms.has(room.code) && room.matchNo === matchNo && room.result) {
+      room.result = { ...room.result, saved: true, ratings: out.rated ? { 1: out.d1, 2: out.d2 } : null };
+      if (out.rated) {
+        if (u1) u1.rating += out.d1;
+        if (u2) u2.rating += out.d2;
+      }
+      broadcast(room);
+    }
+  } catch (e) {
+    console.error("Could not save match", room.code, e.message);
+  }
+}
+
 /* ------------------------------------------------------------ static files */
 
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
@@ -33,6 +107,14 @@ const server = http.createServer((req, res) => {
   if (url.pathname === "/health") {
     res.writeHead(200, { "content-type": "text/plain" });
     return res.end(`ok ${rooms.size} rooms`);
+  }
+  if (url.pathname === "/api/config") {
+    res.writeHead(200, { "content-type": "application/json", "cache-control": "no-cache" });
+    return res.end(JSON.stringify({ supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_KEY, stats: !!SUPABASE_SECRET }));
+  }
+  if (url.pathname === "/api/rooms") {
+    res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+    return res.end(JSON.stringify({ rooms: openRooms().map(roomCard) }));
   }
   let file = path.normalize(path.join(DIST, decodeURIComponent(url.pathname)));
   if (!file.startsWith(DIST)) {
@@ -66,10 +148,12 @@ function newCode() {
   }
 }
 
-function newRoom(eclipse) {
+function newRoom(eclipse, isPublic) {
   const room = {
     code: newCode(),
     eclipse: !!eclipse,
+    public: !!isPublic, // public rooms appear in the room list and in Quick Match
+    createdAt: Date.now(),
     matchNo: 1,
     seats: { 1: null, 2: null }, // { token, ws, goneAt }
     touched: Date.now(),
@@ -87,6 +171,8 @@ function resetMatch(room) {
   room.round = 1;
   room.lives = { 1: LIVES, 2: LIVES };
   room.result = null; // { winner, reason: "capture" | "time" | "left" | "resign" }
+  room.recorded = false;
+  room.startedAt = 0;
   room.seq = 0;
   room.last = null;
   room.autoPlaying = false;
@@ -96,6 +182,28 @@ function resetMatch(room) {
 }
 
 const bothSeated = (room) => !!(room.seats[1] && room.seats[2]);
+
+/* Public rooms with one player waiting, oldest first. */
+function openRooms() {
+  const out = [];
+  for (const room of rooms.values()) {
+    if (!room.public || room.result || bothSeated(room)) continue;
+    const host = room.seats[1] || room.seats[2];
+    if (host && host.ws) out.push(room);
+  }
+  return out.sort((a, b) => a.createdAt - b.createdAt);
+}
+
+function roomCard(room) {
+  const host = room.seats[1] || room.seats[2];
+  return {
+    code: room.code,
+    host: host.user ? host.user.name : "Guest",
+    rating: host.user ? host.user.rating : null,
+    eclipse: room.eclipse,
+    waiting: Math.round((Date.now() - room.createdAt) / 1000),
+  };
+}
 
 /* ------------------------------------------------------------- messaging */
 
@@ -111,6 +219,7 @@ function snapshot(room, seat) {
     you: seat,
     matchNo: room.matchNo,
     eclipse: room.eclipse,
+    public: room.public,
     started: bothSeated(room),
     game: room.game,
     round: room.round,
@@ -120,11 +229,20 @@ function snapshot(room, seat) {
     limitMs: room.limitMs,
     remainingMs: room.deadline ? Math.max(0, room.deadline - now) : 0,
     players: {
-      1: { seated: !!room.seats[1], connected: !!(room.seats[1] && room.seats[1].ws) },
-      2: { seated: !!room.seats[2], connected: !!(room.seats[2] && room.seats[2].ws) },
+      1: playerInfo(room.seats[1]),
+      2: playerInfo(room.seats[2]),
     },
     last: room.last,
     rematch: [...room.rematch],
+  };
+}
+
+function playerInfo(seat) {
+  return {
+    seated: !!seat,
+    connected: !!(seat && seat.ws),
+    name: seat && seat.user ? seat.user.name : null,
+    rating: seat && seat.user ? seat.user.rating : null,
   };
 }
 
@@ -182,6 +300,7 @@ function finish(room, winner, reason) {
   room.limitMs = 0;
   room.deadline = 0;
   room.autoPlaying = false;
+  recordResult(room);
 }
 
 /* Apply a move that has already been checked. Returns true if the turn changed. */
@@ -253,45 +372,66 @@ wss.on("connection", (ws) => {
   ws.isAlive = true;
   ws.on("pong", () => (ws.isAlive = true));
 
-  ws.on("message", (raw) => {
+  const createRoom = (msg, user, isPublic) => {
+    if (rooms.size >= MAX_ROOMS) return send(ws, { t: "error", code: "busy", msg: "The server is full right now. Try again soon." });
+    if (ws.room) detach(ws);
+    const room = newRoom(msg.eclipse, isPublic);
+    const seat = crypto.randomInt(2) + 1; // the creator gets a random side
+    const token = crypto.randomUUID();
+    room.seats[seat] = { token, ws: null, goneAt: 0, user };
+    attach(room, seat, ws);
+    send(ws, { t: "joined", code: room.code, seat, token });
+    broadcast(room);
+  };
+
+  const joinRoom = (room, msg, user) => {
+    const code = room.code;
+    if (ws.room && ws.room !== room) detach(ws);
+    // returning player
+    for (const s of [1, 2]) {
+      if (room.seats[s] && msg.token && room.seats[s].token === msg.token) {
+        if (user && !room.result) room.seats[s].user = user;
+        attach(room, s, ws);
+        send(ws, { t: "joined", code, seat: s, token: msg.token });
+        return broadcast(room);
+      }
+    }
+    // new player takes the empty seat
+    const free = !room.seats[1] ? 1 : !room.seats[2] ? 2 : 0;
+    if (!free) return send(ws, { t: "error", code: "full", msg: "This match already has two players." });
+    const token = crypto.randomUUID();
+    room.seats[free] = { token, ws: null, goneAt: 0, user };
+    attach(room, free, ws);
+    send(ws, { t: "joined", code, seat: free, token });
+    room.startedAt = Date.now();
+    startTurnClock(room); // both seated: the match begins
+    broadcast(room);
+  };
+
+  ws.on("message", async (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch (e) { return; }
     if (!msg || typeof msg.t !== "string") return;
 
-    if (msg.t === "create") {
-      if (rooms.size >= MAX_ROOMS) return send(ws, { t: "error", code: "busy", msg: "The server is full right now. Try again soon." });
-      if (ws.room) detach(ws);
-      const room = newRoom(msg.eclipse);
-      const seat = crypto.randomInt(2) + 1; // the creator gets a random side
-      const token = crypto.randomUUID();
-      room.seats[seat] = { token, ws: null, goneAt: 0 };
-      attach(room, seat, ws);
-      send(ws, { t: "joined", code: room.code, seat, token });
-      return broadcast(room);
-    }
+    if (msg.t === "create" || msg.t === "join" || msg.t === "quick") {
+      if (ws.entering) return; // one at a time per connection
+      ws.entering = true;
+      const user = await resolveUser(msg.auth);
+      ws.entering = false;
+      if (ws.readyState !== 1) return;
 
-    if (msg.t === "join") {
-      const code = String(msg.code || "").toUpperCase().trim();
-      const room = rooms.get(code);
-      if (!room) return send(ws, { t: "error", code: "missing", msg: "That match doesn't exist or has expired." });
-      if (ws.room && ws.room !== room) detach(ws);
-      // returning player
-      for (const s of [1, 2]) {
-        if (room.seats[s] && msg.token && room.seats[s].token === msg.token) {
-          attach(room, s, ws);
-          send(ws, { t: "joined", code, seat: s, token: msg.token });
-          return broadcast(room);
-        }
+      if (msg.t === "create") return createRoom(msg, user, msg.public);
+      if (msg.t === "quick") {
+        // first open public room that isn't your own, otherwise open a new one
+        const open = openRooms().find((r) => {
+          const host = r.seats[1] || r.seats[2];
+          return !(user && host.user && host.user.id === user.id);
+        });
+        return open ? joinRoom(open, {}, user) : createRoom(msg, user, true);
       }
-      // new player takes the empty seat
-      const free = !room.seats[1] ? 1 : !room.seats[2] ? 2 : 0;
-      if (!free) return send(ws, { t: "error", code: "full", msg: "This match already has two players." });
-      const token = crypto.randomUUID();
-      room.seats[free] = { token, ws: null, goneAt: 0 };
-      attach(room, free, ws);
-      send(ws, { t: "joined", code, seat: free, token });
-      startTurnClock(room); // both seated: the match begins
-      return broadcast(room);
+      const room = rooms.get(String(msg.code || "").toUpperCase().trim());
+      if (!room) return send(ws, { t: "error", code: "missing", msg: "That match doesn't exist or has expired." });
+      return joinRoom(room, msg, user);
     }
 
     const room = ws.room;
@@ -323,6 +463,7 @@ wss.on("connection", (ws) => {
         room.seats[2] = s1;
         room.matchNo += 1;
         resetMatch(room);
+        room.startedAt = Date.now();
         for (const s of [1, 2]) {
           const st = room.seats[s];
           if (st && st.ws) send(st.ws, { t: "joined", code: room.code, seat: s, token: st.token });
