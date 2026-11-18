@@ -6,6 +6,7 @@ import {
   hasQualifyingAction, applyAction, strikeReport, chooseTurn,
   ECLIPSE_SECONDS, ECLIPSE_MIN, eclipseSeconds,
 } from "../shared/engine.js";
+import { accessToken, loadProfile, loadRecentMatches, loadLeaderboard, signUp, signIn, signOut, watchUser } from "./account.js";
 
 /* ============================================================================
    GRID DUEL · the game UI
@@ -152,6 +153,50 @@ const CSS = `
 .gd-code b { color: var(--ink); font-size: 15px; letter-spacing: .3em; margin-left: 6px; }
 .gd-lobby-wait { margin: 6px 0 0; text-align: center; font-size: 13px; color: var(--dim); }
 .gd-netbar { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--danger); }
+.gd-acct { position: absolute; top: 16px; right: 16px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(8px); cursor: pointer; font-size: 13px; color: var(--ink) !important; transition: border-color .15s; }
+.gd-acct:hover { border-color: rgba(255,255,255,.3); }
+.gd-acct b { font-weight: 600; }
+.gd-acct i { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--sol); }
+.gd-acct-dot { width: 8px; height: 8px; border-radius: 50%; background: #58d68d; box-shadow: 0 0 8px #58d68d; }
+.gd-form { display: flex; flex-direction: column; gap: 10px; }
+.gd-form label { display: flex; flex-direction: column; gap: 5px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+.gd-input { font-family: 'Space Grotesk', sans-serif; font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); background: var(--cell); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; outline: none; user-select: text; width: 100%; }
+.gd-input:focus { border-color: var(--noc); }
+.gd-formerr { font-size: 13px; color: var(--danger); margin: 0; }
+.gd-formok { font-size: 13px; color: #58d68d; margin: 0; line-height: 1.5; }
+.gd-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--cell); margin-bottom: 14px; }
+.gd-tabs button { border: 0; background: transparent; border-radius: 9px; padding: 9px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--dim) !important; }
+.gd-tabs button.on { background: rgba(157,132,255,.18); color: var(--ink) !important; }
+.gd-statgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.gd-stat { background: var(--cell); border: 1px solid var(--line); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.gd-stat b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.gd-stat span { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.gd-h3 { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); margin: 14px 0 8px; font-weight: 500; }
+.gd-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.gd-rows li { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 7px 10px; border-radius: 9px; background: rgba(255,255,255,.03); color: var(--dim); }
+.gd-rows li.me { background: rgba(157,132,255,.12); }
+.gd-rows li b { color: var(--ink); font-weight: 600; }
+.gd-rows .grow { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-rows .num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.gd-rows .w { color: #58d68d; } .gd-rows .l { color: var(--danger); }
+.gd-empty { font-size: 13px; color: var(--faint); margin: 0; }
+.gd-ratingline { font-size: 13px; color: var(--dim); margin: -4px 0 12px; max-width: 320px; }
+.gd-ratingline b.up { color: #58d68d; } .gd-ratingline b.down { color: var(--danger); }
+.gd-hub { width: min(440px, 100%); display: flex; flex-direction: column; gap: 10px; }
+.gd-hubrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gd-hubrow .gd-cta { padding: 13px 10px; font-size: 14px; }
+.gd-joinrow { display: flex; gap: 8px; }
+.gd-joinrow .gd-input { text-transform: uppercase; letter-spacing: .25em; font-family: 'IBM Plex Mono', monospace; }
+.gd-joinrow button { flex: 0 0 auto; border: 1px solid var(--line); background: var(--cell); border-radius: 10px; padding: 0 18px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.gd-joinrow button:disabled { opacity: .4; cursor: default; }
+.gd-roomlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+.gd-roomlist li { display: flex; align-items: center; gap: 10px; padding: 9px 9px 9px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font-size: 14px; }
+.gd-roomlist li b { font-weight: 600; }
+.gd-roomlist li i { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--sol); }
+.gd-roomlist li em { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--noc); }
+.gd-roomlist li span.grow { flex: 1; }
+.gd-roomlist li button { border: 0; border-radius: 9px; padding: 8px 16px; cursor: pointer; font-weight: 700; font-size: 13px; background: linear-gradient(180deg, #ffbf5e, #e8952a); color: #1a1205 !important; }
+.gd-roomempty { text-align: center; font-size: 13px; color: var(--faint); padding: 18px 10px; border: 1px dashed var(--line); border-radius: 12px; }
 .gd-menu-foot { margin-top: 22px; color: var(--faint); font-size: 12.5px; text-align: center; }
 
 /* ---------- play screen ---------- */
@@ -441,10 +486,12 @@ function Lobby({ online, onCancel }) {
   return (
     <div className="gd-menu">
       <div className="gd-orbs"><span className="o1" /><span className="o2" /></div>
-      <p className="gd-eyebrow">private match</p>
-      <h2 className="gd-lobby-t">Invite a friend</h2>
+      <p className="gd-eyebrow">{snap.public ? "public room" : "private match"}</p>
+      <h2 className="gd-lobby-t">{snap.public ? "Waiting for a challenger" : "Invite a friend"}</h2>
       <p className="gd-lobby-s">
-        Send them this link. The match starts as soon as they open it.
+        {snap.public
+          ? "Your room is listed under Play Online, so anyone can join. You can also send this link."
+          : "Send them this link. The match starts as soon as they open it."}
         <br />You'll play <b style={{ color: SIDE[snap.you].color }}>{SIDE[snap.you].name}</b>
         {snap.eclipse ? <> · <b style={{ color: "var(--noc)" }}>☾ Eclipse Mode</b></> : null}
       </p>
@@ -455,16 +502,27 @@ function Lobby({ online, onCancel }) {
         </div>
         {navigator.share ? <button className="gd-cta" onClick={share}>Share link</button> : <button className="gd-cta" onClick={copy}>{copied ? "Link copied" : "Copy link"}</button>}
         <div className="gd-code">Code <b>{snap.code}</b></div>
-        <p className="gd-lobby-wait"><span className="gd-dots">Waiting for your friend</span></p>
+        <p className="gd-lobby-wait"><span className="gd-dots">{snap.public ? "Waiting for an opponent" : "Waiting for your friend"}</span></p>
         <button className="gd-link" onClick={onCancel}>Cancel</button>
       </div>
     </div>
   );
 }
 
-function Menu({ level, setLevel, timer, eclipse, onStart, onRules, onSettings, onFriend }) {
+function AccountChip({ account, onAccount }) {
+  if (!account.available) return null;
+  const pr = account.profile;
+  return (
+    <button className="gd-acct" onClick={() => { SFX.click(); onAccount(); }}>
+      {pr ? <><span className="gd-acct-dot" /><b>{pr.username}</b><i>{pr.rating}</i></> : <>Sign in</>}
+    </button>
+  );
+}
+
+function Menu({ level, setLevel, timer, eclipse, onStart, onRules, onSettings, onFriend, account, onAccount }) {
   return (
     <div className="gd-menu">
+      <AccountChip account={account} onAccount={onAccount} />
       <div className="gd-orbs"><span className="o1" /><span className="o2" /></div>
       <p className="gd-eyebrow">a tactical duel · 5 × 4</p>
       <h1 className="gd-logo"><span>Solaris</span><i>versus</i><em>Noctis</em></h1>
@@ -476,7 +534,7 @@ function Menu({ level, setLevel, timer, eclipse, onStart, onRules, onSettings, o
             <button key={l} className={l === level ? "on" : ""} onClick={() => { SFX.click(); setLevel(l); }}>{l}</button>
           ))}
         </div>
-        <button className="gd-cta ghost" style={{ marginTop: 6 }} onClick={() => { SFX.click(); onFriend(); }}>Play a Friend <small className="gd-cta-sub">online · private link</small></button>
+        <button className="gd-cta ghost" style={{ marginTop: 6 }} onClick={() => { SFX.click(); onFriend(); }}>Play Online <small className="gd-cta-sub">quick match · rooms · friends</small></button>
         <button className="gd-cta ghost" onClick={() => { SFX.click(); onStart({ aiSide: 0, level, timer }); }}>Same-Screen 2-Player</button>
         <div className="gd-links">
           <button className="gd-link" onClick={onRules}>How to play</button>
@@ -834,7 +892,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   };
 
   const label = (id) =>
-    online ? (id === seat ? "You" : "Opponent") : aiSide === id ? `Computer · ${level}` : vsAI ? "You" : `Player ${id}`;
+    online ? `${online.players[id].name ? SIDE[id].name : id === seat ? "You" : "Guest"}${online.players[id].rating != null ? ` · ${online.players[id].rating}` : ""}${id === seat && online.players[id].name ? " · you" : ""}` : aiSide === id ? `Computer · ${level}` : vsAI ? "You" : `Player ${id}`;
   const away = (id) => online && online.players[id].seated && !online.players[id].connected;
   const reasonWord = { time: "out of time", left: "left", resign: "resigned" };
   const status = (id) =>
@@ -917,7 +975,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                   <span className="gd-avatar" />
                 </span>
                 <span className="gd-who">
-                  <b>{SIDE[id].name}</b>
+                  <b>{online && online.players[id].name ? online.players[id].name : SIDE[id].name}</b>
                   <small>{status(id)}</small>
                 </span>
                 {timed ? (
@@ -1081,6 +1139,17 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                 </React.Fragment>
               ))}
             </div>
+            {online ? (
+              <div className="gd-ratingline">
+                {result && result.ratings ? (
+                  <>Rating <b className={result.ratings[seat] >= 0 ? "up" : "down"}>{result.ratings[seat] >= 0 ? "+" : ""}{result.ratings[seat]}</b></>
+                ) : result && result.saved ? (
+                  online.players[seat].name ? <>Saved to your stats. Rating only changes when both players are signed in.</> : <>Sign in to track your stats.</>
+                ) : !online.players[seat].name ? (
+                  <>Sign in before a match to track your stats.</>
+                ) : null}
+              </div>
+            ) : null}
             <div className="gd-over-btns">
               {online ? (
                 <button className="gd-cta" disabled={iVoted || foeGone} onClick={() => net.send({ t: "rematch" })}>
@@ -1143,6 +1212,205 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   );
 }
 
+/* ------------------------------------------------------- accounts & stats */
+
+function useEscape(onClose) {
+  useEffect(() => {
+    const h = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+}
+
+function SignInModal({ onClose }) {
+  useEscape(onClose);
+  const [tab, setTab] = useState("in");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [note, setNote] = useState("");
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    setErr("");
+    setNote("");
+    setBusy(true);
+    const out = tab === "in" ? await signIn(email.trim(), password) : await signUp(username.trim(), email.trim(), password);
+    setBusy(false);
+    if (out.error) return setErr(out.error);
+    if (out.confirm) {
+      setTab("in");
+      setPassword("");
+      return setNote("Account created. Check your email for a confirmation link, then sign in here.");
+    }
+    onClose();
+  };
+
+  return (
+    <div className="gd-modal" onClick={onClose}>
+      <div className="gd-modal-card" style={{ width: "min(400px, 100%)" }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Account">
+        <div className="gd-tabs">
+          <button className={tab === "in" ? "on" : ""} onClick={() => { setTab("in"); setErr(""); }}>Sign in</button>
+          <button className={tab === "up" ? "on" : ""} onClick={() => { setTab("up"); setErr(""); setNote(""); }}>Create account</button>
+        </div>
+        <form className="gd-form" onSubmit={submit}>
+          {tab === "up" ? (
+            <label>Username
+              <input className="gd-input" value={username} onChange={(e) => setUsername(e.target.value)} maxLength={16} autoComplete="username" placeholder="3-16 letters, numbers, _" required />
+            </label>
+          ) : null}
+          <label>Email
+            <input className="gd-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+          </label>
+          <label>Password
+            <input className="gd-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={tab === "in" ? "current-password" : "new-password"} minLength={tab === "up" ? 8 : undefined} required />
+          </label>
+          {err ? <p className="gd-formerr" role="alert">{err}</p> : null}
+          {note ? <p className="gd-formok">{note}</p> : null}
+          <button className="gd-cta" type="submit" disabled={busy} style={{ marginTop: 4 }}>
+            {busy ? "One moment…" : tab === "in" ? "Sign in" : "Create account"}
+          </button>
+        </form>
+        <p className="gd-keys">An account saves your online wins, losses and rating. You can always play as a guest.</p>
+      </div>
+    </div>
+  );
+}
+
+function ProfileModal({ profile, onClose }) {
+  useEscape(onClose);
+  const [recent, setRecent] = useState(null);
+  const [top, setTop] = useState(null);
+  useEffect(() => {
+    let live = true;
+    loadRecentMatches(profile.id).then((d) => live && setRecent(d)).catch(() => live && setRecent([]));
+    loadLeaderboard().then((d) => live && setTop(d)).catch(() => live && setTop([]));
+    return () => { live = false; };
+  }, [profile.id, profile.games]);
+
+  const rate = profile.games ? Math.round((profile.wins / profile.games) * 100) : 0;
+  const reason = { capture: "capture", time: "on time", left: "opponent left", resign: "resignation" };
+
+  return (
+    <div className="gd-modal" onClick={onClose}>
+      <div className="gd-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Your profile">
+        <h2>{profile.username}</h2>
+        <div className="gd-statgrid">
+          <div className="gd-stat"><b style={{ color: "var(--sol)" }}>{profile.rating}</b><span>Rating</span></div>
+          <div className="gd-stat"><b>{profile.wins}–{profile.losses}</b><span>Won–lost</span></div>
+          <div className="gd-stat"><b>{rate}%</b><span>Win rate</span></div>
+          <div className="gd-stat"><b>{profile.best_streak}</b><span>Best streak</span></div>
+        </div>
+
+        <h3 className="gd-h3">Recent matches</h3>
+        {recent === null ? <p className="gd-empty">Loading…</p> : recent.length === 0 ? (
+          <p className="gd-empty">No online matches yet. Stats count for online matches you play while signed in.</p>
+        ) : (
+          <ul className="gd-rows">
+            {recent.map((m) => {
+              const mySide = m.solaris_id === profile.id ? 1 : 2;
+              const won = m.winner_side === mySide;
+              const foe = mySide === 1 ? m.noctis : m.solaris;
+              const delta = mySide === 1 ? m.solaris_delta : m.noctis_delta;
+              return (
+                <li key={m.id}>
+                  <b className={won ? "w" : "l"}>{won ? "Win" : "Loss"}</b>
+                  <span className="grow">vs <b>{foe ? foe.username : "Guest"}</b> · {reason[m.reason]} · round {m.rounds}{m.eclipse ? " · ☾" : ""}</span>
+                  <span className={`num ${delta > 0 ? "w" : delta < 0 ? "l" : ""}`}>{m.rated ? (delta >= 0 ? "+" : "") + delta : "–"}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <h3 className="gd-h3">Top players</h3>
+        {top === null ? <p className="gd-empty">Loading…</p> : top.length === 0 ? <p className="gd-empty">Nobody has finished a match yet.</p> : (
+          <ul className="gd-rows">
+            {top.map((t, i) => (
+              <li key={t.id} className={t.id === profile.id ? "me" : ""}>
+                <span className="num">{i + 1}</span>
+                <b className="grow">{t.username}</b>
+                <span className="num">{t.wins}–{t.losses}</span>
+                <span className="num" style={{ color: "var(--sol)" }}>{t.rating}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="gd-over-btns" style={{ marginTop: 18 }}>
+          <button className="gd-cta" style={{ flex: 1 }} onClick={onClose}>Done</button>
+          <button className="gd-cta ghost" onClick={() => { signOut(); onClose(); }}>Sign out</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------- play online */
+
+function OnlineHub({ account, eclipse, onQuick, onCreate, onJoin, onBack, onAccount }) {
+  const [rooms, setRooms] = useState(null);
+  const [code, setCode] = useState("");
+  useEffect(() => {
+    let live = true;
+    const pull = () =>
+      fetch("/api/rooms")
+        .then((r) => r.json())
+        .then((d) => live && setRooms(d.rooms || []))
+        .catch(() => live && setRooms((x) => x || []));
+    pull();
+    const id = setInterval(pull, 3000);
+    return () => { live = false; clearInterval(id); };
+  }, []);
+  const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+
+  return (
+    <div className="gd-menu">
+      <AccountChip account={account} onAccount={onAccount} />
+      <p className="gd-eyebrow">play online{eclipse ? " · ☾ eclipse mode" : ""}</p>
+      <h2 className="gd-lobby-t">Find a match</h2>
+      <div className="gd-hub">
+        <button className="gd-cta" onClick={() => { SFX.click(); onQuick(); }}>Quick Match <small className="gd-cta-sub" style={{ color: "#5a3d0c" }}>join the first open room</small></button>
+        <div className="gd-hubrow">
+          <button className="gd-cta ghost" onClick={() => { SFX.click(); onCreate(true); }}>Public room <small className="gd-cta-sub">anyone can join</small></button>
+          <button className="gd-cta ghost" onClick={() => { SFX.click(); onCreate(false); }}>Private room <small className="gd-cta-sub">invite by link</small></button>
+        </div>
+
+        <h3 className="gd-h3" style={{ margin: "10px 0 0 4px" }}>Open rooms</h3>
+        {rooms === null ? <div className="gd-roomempty">Loading rooms…</div> : rooms.length === 0 ? (
+          <div className="gd-roomempty">No open rooms right now. Start one with Quick Match.</div>
+        ) : (
+          <ul className="gd-roomlist">
+            {rooms.map((r) => (
+              <li key={r.code}>
+                <b>{r.host}</b>
+                {r.rating != null ? <i>{r.rating}</i> : null}
+                {r.eclipse ? <em>☾ eclipse</em> : null}
+                <span className="grow" />
+                <button onClick={() => { SFX.click(); onJoin(r.code); }}>Join</button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h3 className="gd-h3" style={{ margin: "10px 0 0 4px" }}>Have a code?</h3>
+        <form className="gd-joinrow" onSubmit={(e) => { e.preventDefault(); if (clean.length === 6) onJoin(clean); }}>
+          <input className="gd-input" value={clean} onChange={(e) => setCode(e.target.value)} placeholder="ABC123" aria-label="Room code" />
+          <button type="submit" disabled={clean.length !== 6}>Join</button>
+        </form>
+
+        {account.available && !account.profile ? (
+          <p className="gd-lobby-wait">Playing as a guest. <button className="gd-link" style={{ padding: 0 }} onClick={onAccount}>Sign in</button> to save your stats.</p>
+        ) : null}
+        <button className="gd-link" onClick={onBack}>← Back to menu</button>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------- online wiring */
 
 const tokenKey = (code) => `gd-seat-${code}`;
@@ -1201,13 +1469,16 @@ export default function GridDuel() {
     }
     wsRef.current = ws;
     let opened = false;
-    ws.onopen = () => {
+    ws.onopen = async () => {
       opened = true;
       retryRef.current = 0;
+      const auth = await accessToken(); // empty for guests
       const w = wantRef.current;
-      if (!w) return ws.close();
-      if (w.code) ws.send(JSON.stringify({ t: "join", code: w.code, token: loadToken(w.code) }));
-      else ws.send(JSON.stringify({ t: "create", eclipse: w.eclipse }));
+      if (!w || wsRef.current !== ws) return ws.close();
+      if (ws.readyState !== 1) return;
+      if (w.code) ws.send(JSON.stringify({ t: "join", code: w.code, token: loadToken(w.code), auth }));
+      else if (w.quick) ws.send(JSON.stringify({ t: "quick", eclipse: w.eclipse, auth }));
+      else ws.send(JSON.stringify({ t: "create", eclipse: w.eclipse, public: w.public, auth }));
     };
     ws.onmessage = (ev) => {
       let m;
@@ -1264,8 +1535,29 @@ export default function GridDuel() {
     }
     setRoomInUrl(null);
     setOnline(null);
-    setScreen("menu");
+    setScreen("hub");
   }, []);
+
+  /* ---- account: who is signed in, and their stats */
+  const [account, setAccount] = useState({ available: false, userId: null, profile: null });
+  const [acctModal, setAcctModal] = useState(false);
+  const refreshProfile = useCallback((id) => {
+    if (!id) return;
+    loadProfile(id).then((profile) => setAccount((a) => (a.userId === id ? { ...a, profile } : a))).catch(() => {});
+  }, []);
+  useEffect(
+    () =>
+      watchUser((userId, available) => {
+        setAccount((a) => ({ available, userId, profile: userId && a.userId === userId ? a.profile : null }));
+        refreshProfile(userId);
+      }),
+    [refreshProfile]
+  );
+  const closeAcct = useCallback(() => setAcctModal(false), []);
+  const openAcct = () => {
+    refreshProfile(account.userId);
+    setAcctModal(true);
+  };
 
   // opened from a match link: join straight away
   useEffect(() => {
@@ -1291,6 +1583,13 @@ export default function GridDuel() {
   const snap = online && online.snap;
   const net = useMemo(() => (snap ? { snap, send: sendNet } : null), [snap, sendNet]);
 
+  // a finished online match changes your stats: fetch them again
+  const savedKey = snap && snap.result && snap.result.saved ? `${snap.code}-${snap.matchNo}` : "";
+  useEffect(() => {
+    if (savedKey) refreshProfile(account.userId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedKey]);
+
   let body;
   if (screen === "menu") {
     body = (
@@ -1302,7 +1601,21 @@ export default function GridDuel() {
         onSettings={() => setSettings(true)}
         onStart={start}
         onRules={() => setRules(true)}
-        onFriend={() => goOnline({ create: true, eclipse })}
+        onFriend={() => setScreen("hub")}
+        account={account}
+        onAccount={openAcct}
+      />
+    );
+  } else if (screen === "hub") {
+    body = (
+      <OnlineHub
+        account={account}
+        eclipse={eclipse}
+        onQuick={() => goOnline({ quick: true, eclipse })}
+        onCreate={(isPublic) => goOnline({ create: true, eclipse, public: isPublic })}
+        onJoin={(code) => goOnline({ code })}
+        onBack={() => setScreen("menu")}
+        onAccount={openAcct}
       />
     );
   } else if (screen === "online") {
@@ -1342,6 +1655,7 @@ export default function GridDuel() {
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       {body}
       {rules ? <RulesModal onClose={closeRules} /> : null}
+      {acctModal ? (account.profile ? <ProfileModal profile={account.profile} onClose={closeAcct} /> : account.userId ? null : <SignInModal onClose={closeAcct} />) : null}
       {settings ? (
         <SettingsModal
           onClose={closeSettings}

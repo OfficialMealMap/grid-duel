@@ -4,7 +4,7 @@ A tactical duel on a 5×4 grid. Play the computer, play on one screen, or send a
 
 ## Run it on your computer
 
-Needs Node.js 18 or newer.
+Needs Node.js 20 or newer.
 
 ```bash
 npm install
@@ -12,7 +12,7 @@ npm run build
 npm start
 ```
 
-Open http://localhost:3000. To test a private match on one computer, click **Play a Friend**, copy the link, and open it in a private/incognito window.
+Open http://localhost:3000. To test a private match on one computer, click **Play Online → Private room**, copy the link, and open it in a private/incognito window.
 
 ## Put it online (Render)
 
@@ -21,7 +21,7 @@ Open http://localhost:3000. To test a private match on one computer, click **Pla
 3. Use these settings:
    - **Build command:** `npm install && npm run build`
    - **Start command:** `npm start`
-4. Click **Create Web Service**. When it's live, open the address Render gives you and click **Play a Friend**.
+4. Click **Create Web Service**. When it's live, open the address Render gives you and click **Play Online**.
 
 Railway and Fly.io work the same way: any host that runs `npm start` and supports WebSockets will do. The server reads the port from the `PORT` environment variable.
 
@@ -29,18 +29,36 @@ Two things to know about hosting:
 - Matches live in the server's memory. A restart or redeploy ends any matches in progress.
 - Free plans usually put the server to sleep when nobody is using it, so the first visit after a quiet spell can take a little while to load.
 
+## Accounts, stats and online rooms
+
+Accounts and stats are stored in a Supabase project ("Grid Duel"). Its address and publishable key are built in (they're safe to share), so sign-in works with no setup.
+
+Saving match results needs one secret, set on the host and never put in the code:
+
+| Environment variable | Value |
+| --- | --- |
+| `SUPABASE_SECRET_KEY` | Supabase dashboard → Project Settings → API Keys → **Secret key** |
+
+Without it the game runs normally, but wins, losses and ratings aren't saved.
+
+- **Accounts:** email + password, with a unique username. Guests can always play.
+- **Stats:** online matches only. Wins, losses, streaks and match history are saved for signed-in players. Rating (Elo, starts at 1000) changes only when both players are signed in.
+- **Play Online:** Quick Match joins the first open public room or opens one. Public rooms appear in the room list; private rooms are link or code only.
+- **Database:** `supabase/schema.sql` is the full schema. Browsers can only read; only the server (with the secret key) can record results.
+
 ## How it fits together
 
 ```
 shared/engine.js   the rules and the AI. Used by both the server and the browser.
 server/index.js    serves the game and runs private matches over WebSockets.
 client/            the game UI (React), bundled into dist/ by build.js.
+supabase/          the database schema (already applied to the project).
 ```
 
 The server is the referee. It keeps the only real copy of each match, checks every move against the shared engine, ignores anything illegal, and runs the Eclipse Mode clock. A browser only shows the match and sends moves, so a player can't cheat by editing the page.
 
 ### Private matches
-- **Play a Friend** creates a match with a 6-letter code and a link. The creator gets a random side.
+- **Play Online → Private room** creates a match with a 6-letter code and a link. The creator gets a random side.
 - Whoever opens the link first takes the other seat. Anyone after that is told the match is full.
 - Reloading or briefly losing connection puts you back in your seat (the browser remembers it).
 - A player who stays disconnected for 90 seconds loses. Leaving mid-match also counts as a loss.
