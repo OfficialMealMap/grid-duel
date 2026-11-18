@@ -194,23 +194,10 @@ const CSS = `
 .gd-roomempty { text-align: center; font-size: 13px; color: var(--faint); padding: 18px 10px; border: 1px dashed var(--line); border-radius: 12px; }
 /* ---------- app shell ---------- */
 .gd-app { min-height: 100vh; display: flex; flex-direction: column; animation: gd-fadein .3s ease both; }
-.gd-nav { position: sticky; top: 0; z-index: 20; background: rgba(8,10,21,.78); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
-.gd-nav-in { max-width: 1160px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 28px; }
-.gd-brand { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; cursor: pointer; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--ink) !important; padding: 0; white-space: nowrap; }
-.gd-brand-mark { position: relative; width: 26px; height: 18px; flex: 0 0 26px; }
-.gd-brand-mark i { position: absolute; top: 0; width: 18px; height: 18px; border-radius: 50%; }
-.gd-brand-mark i:first-child { left: 0; background: var(--sol); }
-.gd-brand-mark i:last-child { right: 0; background: var(--noc); mix-blend-mode: screen; }
-.gd-nav-links { display: flex; gap: 4px; flex: 1; min-width: 0; }
-.gd-nav-links button { background: none; border: 0; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--dim) !important; padding: 8px 12px; border-radius: 8px; position: relative; white-space: nowrap; transition: color .15s, background .15s; }
-.gd-nav-links button:hover { color: var(--ink) !important; background: rgba(255,255,255,.05); }
-.gd-nav-links button.on { color: var(--ink) !important; }
-.gd-nav-links button.on::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -11px; height: 2px; border-radius: 2px; background: var(--sol); }
-.gd-nav-right { display: flex; align-items: center; gap: 10px; }
-.gd-page { flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 32px 24px 56px; }
-.gd-foot { border-top: 1px solid var(--line); padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; max-width: 1160px; width: 100%; margin: 0 auto; font-size: 12.5px; color: var(--faint); }
-.gd-foot button { background: none; border: 0; cursor: pointer; color: var(--dim) !important; font-size: 12.5px; margin-left: 16px; padding: 0; }
-.gd-foot button:hover { color: var(--ink) !important; }
+.gd-corner { width: 100%; max-width: 1160px; margin: 0 auto; padding: 16px 24px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gd-corner-right { display: flex; align-items: center; gap: 10px; }
+.gd-herolinks { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.gd-page { flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 20px 24px 48px; }
 
 .gd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.04); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink) !important; white-space: nowrap; transition: background .15s, border-color .15s, transform .1s, box-shadow .15s; }
 .gd-btn:hover:not(:disabled) { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); }
@@ -313,11 +300,8 @@ const CSS = `
   .gd-mini { display: none; }
 }
 @media (max-width: 720px) {
-  .gd-nav-in { height: auto; padding: 10px 16px 0; flex-wrap: wrap; gap: 8px 12px; }
-  .gd-nav-links { order: 3; flex: 0 0 100%; overflow-x: auto; margin: 0 -8px; }
-  .gd-nav-links button.on::after { bottom: 0; }
-  .gd-nav-right { margin-left: auto; }
-  .gd-page { padding: 20px 16px 40px; }
+  .gd-page { padding: 14px 16px 40px; }
+  .gd-corner { padding: 12px 16px 0; }
   .gd-hero { padding: 22px; }
   .gd-modes { grid-template-columns: 1fr; }
   .gd-mode-meta { height: auto; }
@@ -647,37 +631,17 @@ function AccountChip({ account, onAccount }) {
   );
 }
 
-const NAV = [["menu", "Play"], ["leaders", "Leaderboard"]];
-
-function Shell({ screen, go, account, onAccount, onSettings, onRules, children }) {
+function Shell({ screen, go, account, onAccount, onSettings, children }) {
   return (
     <div className="gd-app">
-      <header className="gd-nav">
-        <div className="gd-nav-in">
-          <button className="gd-brand" onClick={() => go("menu")} aria-label="Grid Duel home">
-            <span className="gd-brand-mark"><i /><i /></span>
-            <span>Grid Duel</span>
-          </button>
-          <nav className="gd-nav-links" aria-label="Main">
-            {NAV.map(([id, name]) => (
-              <button key={id} className={screen === id || (id === "menu" && screen === "online") ? "on" : ""} onClick={() => { SFX.click(); go(id); }}>{name}</button>
-            ))}
-            <button onClick={onRules}>How to play</button>
-          </nav>
-          <div className="gd-nav-right">
-            <button className="gd-btn icon" onClick={onSettings} aria-label="Settings">⚙</button>
-            <AccountChip account={account} onAccount={onAccount} />
-          </div>
+      <div className="gd-corner">
+        {screen === "leaders" ? <button className="gd-btn" onClick={() => { SFX.click(); go("menu"); }}>← Back</button> : <span />}
+        <div className="gd-corner-right">
+          <button className="gd-btn icon" onClick={onSettings} aria-label="Settings">⚙</button>
+          <AccountChip account={account} onAccount={onAccount} />
         </div>
-      </header>
+      </div>
       <main className="gd-page">{children}</main>
-      <footer className="gd-foot">
-        <span>Grid Duel · Solaris vs Noctis</span>
-        <span>
-          <button onClick={onRules}>How to play</button>
-          <button onClick={onSettings}>Settings</button>
-        </span>
-      </footer>
     </div>
   );
 }
@@ -777,7 +741,7 @@ function RoomList({ rooms, onJoin }) {
   );
 }
 
-function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, account, onAccount, guestName, setGuestName, onQuick, onCreate, onJoin }) {
+function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, onLeaders, account, onAccount, guestName, setGuestName, onQuick, onCreate, onJoin }) {
   const rooms = useOpenRooms();
   const pr = account.profile;
   const signedIn = !!pr;
@@ -806,7 +770,10 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, a
         <h1><span>Solaris</span> <small>vs</small> <em>Noctis</em></h1>
         <p className="gd-lede">Step, strike and wall your way across the board. Land on your opponent to win.</p>
         <MiniBoard />
-        <button className="gd-textbtn" onClick={onRules}>How to play →</button>
+        <div className="gd-herolinks">
+          <button className="gd-btn" onClick={() => { SFX.click(); onRules(); }}>How to play</button>
+          <button className="gd-btn" onClick={() => { SFX.click(); onLeaders(); }}>Leaderboard</button>
+        </div>
       </section>
 
       <div className="gd-col left">
@@ -1985,7 +1952,7 @@ export default function GridDuel() {
   }, [savedKey]);
 
   const shell = (page) => (
-    <Shell screen={screen} go={go} account={account} onAccount={openAcct} onSettings={() => setSettings(true)} onRules={() => setRules(true)}>
+    <Shell screen={screen} go={go} account={account} onAccount={openAcct} onSettings={() => setSettings(true)}>
       {page}
     </Shell>
   );
@@ -2000,6 +1967,7 @@ export default function GridDuel() {
         eclipse={eclipse}
         onSettings={() => setSettings(true)}
         onRules={() => setRules(true)}
+        onLeaders={() => setScreen("leaders")}
         onStart={start}
         account={account}
         onAccount={openAcct}
