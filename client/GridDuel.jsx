@@ -241,9 +241,7 @@ const CSS = `
 .gd-pill.on { color: var(--noc) !important; border-color: rgba(157,132,255,.45); background: rgba(157,132,255,.08); }
 .gd-pill:hover span { color: var(--ink); }
 .gd-pill.static { cursor: default; font-family: 'IBM Plex Mono', monospace; }
-.gd-mini { flex: 0 0 240px; display: grid; grid-template-columns: repeat(${COLS}, 1fr); gap: 5px; padding: 9px; border-radius: 16px; background: rgba(8,10,21,.55); border: 1px solid var(--line); transform: perspective(700px) rotateX(14deg) rotateZ(-4deg); box-shadow: 0 30px 50px rgba(0,0,0,.45); }
-.gd-mini > span { aspect-ratio: 1; border-radius: 7px; background: var(--cell); box-shadow: inset 0 0 0 1px var(--line); display: flex; align-items: center; justify-content: center; }
-.gd-mini > span.s1 { background: rgba(242,169,59,.2); } .gd-mini > span.s2 { background: rgba(157,132,255,.22); }
+.gd-mini { flex: 0 0 240px; padding: 9px; border-radius: 16px; background: rgba(8,10,21,.55); border: 1px solid var(--line); transform: perspective(700px) rotateX(14deg) rotateZ(-4deg); box-shadow: 0 30px 50px rgba(0,0,0,.45); }
 .gd-mini i { width: 62%; aspect-ratio: 1; border-radius: 50%; }
 .gd-mini i.sol { background: radial-gradient(circle at 34% 28%, #ffe0a8, var(--sol) 66%); box-shadow: 0 0 14px rgba(242,169,59,.7); }
 .gd-mini i.noc { background: radial-gradient(circle at 34% 28%, #ddd3ff, var(--noc) 66%); box-shadow: 0 0 14px rgba(157,132,255,.7); }
@@ -385,6 +383,48 @@ const CSS = `
 .gd-warn-in strong { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 30px; line-height: 1; min-width: 1ch; color: var(--ink); font-variant-numeric: tabular-nums; }
 .gd-warn-in small { font-size: 12.5px; line-height: 1.45; color: var(--dim); }
 @keyframes gd-warnpop { from { transform: scale(.8); opacity: 0 } to { transform: none; opacity: 1 } }
+/* ---------- waiting room ---------- */
+.gd-wait { max-width: 760px; margin: 2vh auto 0; display: flex; flex-direction: column; align-items: center; gap: 26px; animation: gd-fadeup .35s ease both; }
+.gd-wait-head { text-align: center; }
+.gd-wait-head h1 { margin: 0; font-size: clamp(30px, 4.6vw, 46px); font-weight: 700; letter-spacing: -.035em; line-height: 1.05; }
+.gd-versus { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
+.gd-vcard { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 18px; border: 1px solid color-mix(in srgb, currentColor 45%, transparent); background: radial-gradient(260px 140px at 0% 0%, color-mix(in srgb, currentColor 14%, transparent), transparent 70%), rgba(18,22,41,.7); box-shadow: 0 14px 40px color-mix(in srgb, currentColor 12%, transparent); min-width: 0; }
+.gd-vcard.empty { border-style: dashed; box-shadow: none; background: rgba(18,22,41,.45); flex-direction: row-reverse; text-align: right; }
+.gd-vtok { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%; background: radial-gradient(circle at 34% 28%, color-mix(in srgb, currentColor 60%, white), currentColor 66%); box-shadow: 0 0 22px color-mix(in srgb, currentColor 65%, transparent); }
+.gd-vtok.seek { background: transparent; box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 55%, transparent); position: relative; }
+.gd-vtok.seek::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 3px solid transparent; border-top-color: currentColor; animation: gd-spin 1s linear infinite; }
+@keyframes gd-spin { to { transform: rotate(360deg) } }
+.gd-vinfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gd-vinfo b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-vinfo b i { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; color: var(--sol); }
+.gd-vinfo small { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: currentColor; opacity: .85; }
+.gd-vcard.empty .gd-vinfo b { color: var(--dim); }
+.gd-vvs { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: .2em; color: var(--faint); }
+.gd-wait-grid { width: 100%; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.gd-facts2 { margin: 0; display: flex; flex-direction: column; }
+.gd-facts2 div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; }
+.gd-facts2 div + div { border-top: 1px solid var(--line); }
+.gd-facts2 dt { font-size: 12.5px; color: var(--faint); white-space: nowrap; }
+.gd-facts2 dd { margin: 0; font-size: 13.5px; color: var(--ink); text-align: right; }
+.gd-facts2 dd.mono { font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; letter-spacing: .22em; color: var(--noc); }
+@media (max-width: 640px) {
+  .gd-versus { grid-template-columns: 1fr; gap: 8px; } .gd-vvs { text-align: center; }
+  .gd-wait-grid { grid-template-columns: 1fr; }
+}
+/* ---------- animated demo board ---------- */
+.gd-mini-in { position: relative; display: grid; grid-template-columns: repeat(${COLS}, 1fr); gap: 5px; }
+.gd-mini-in > span { aspect-ratio: 1; border-radius: 7px; background: var(--cell); box-shadow: inset 0 0 0 1px var(--line); display: flex; align-items: center; justify-content: center; }
+.gd-mini-in > span.s1 { background: rgba(242,169,59,.2); } .gd-mini-in > span.s2 { background: rgba(157,132,255,.22); }
+.gd-mini em { animation: gd-rise .38s cubic-bezier(.3,1.5,.5,1) both; }
+.gd-mini em.cracked { background: linear-gradient(160deg,#69637f,#3d3952); transform: rotate(-4deg) scale(.92); animation: none; }
+.gd-mini-tok { position: absolute; left: calc(var(--c) * (100% + 5px) / ${COLS}); top: calc(var(--r) * (100% + 5px) / ${ROWS}); width: calc((100% - ${(COLS - 1) * 5}px) / ${COLS}); height: calc((100% - ${(ROWS - 1) * 5}px) / ${ROWS}); display: flex; align-items: center; justify-content: center; transition: left .42s cubic-bezier(.45,.05,.2,1), top .42s cubic-bezier(.45,.05,.2,1), opacity .5s, transform .5s; z-index: 2; }
+.gd-mini-tok i { transition: transform .3s; }
+.gd-mini-tok.turn i { transform: scale(1.12); }
+.gd-mini-tok.out { opacity: 0; transform: scale(.2) rotate(90deg); }
+.gd-mini-tok.won { z-index: 3; } .gd-mini-tok.won i { animation: gd-miniwin 1s ease-in-out infinite; }
+@keyframes gd-miniwin { 0%,100% { transform: scale(1.1) } 50% { transform: scale(1.4) } }
+.gd-mini-fx { position: absolute; left: calc((var(--c) - 1) * (100% + 5px) / ${COLS}); top: calc((var(--r) - 1) * (100% + 5px) / ${ROWS}); width: calc(3 * (100% + 5px) / ${COLS} - 5px); height: calc(3 * (100% + 5px) / ${ROWS} - 5px); border-radius: 12px; border: 2px solid var(--sol); pointer-events: none; z-index: 1; animation: gd-blast .55s cubic-bezier(.2,.7,.3,1) forwards; }
+.gd-mini-fx.p2 { border-color: var(--noc); }
 .gd-menu-foot { margin-top: 22px; color: var(--faint); font-size: 12.5px; text-align: center; }
 
 /* ---------- play screen ---------- */
@@ -757,18 +797,63 @@ function LeaderRows({ rows, meId, max }) {
   );
 }
 
+/* The home-page board: the real engine playing itself, forever. Two easy
+   computer players take turns; when one is captured the board resets. */
 function MiniBoard() {
+  const [g, setG] = useState(initialState);
+  const [fx, setFx] = useState(null);
+  useEffect(() => {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+    let state = initialState();
+    let plan = [];
+    let turns = 0;
+    let timer;
+    let stopped = false;
+    const tick = () => {
+      if (stopped) return;
+      if (document.hidden) { timer = setTimeout(tick, 1000); return; } // don't work in a background tab
+      if (state.winner || turns > 36) {
+        state = initialState();
+        plan = [];
+        turns = 0;
+        setG(state);
+        timer = setTimeout(tick, 1200);
+        return;
+      }
+      if (!plan.length) { plan = chooseTurn(state, "easy").slice(); turns += 1; }
+      const a = plan.shift();
+      const who = state.turn;
+      if (a.type === "strike") setFx({ id: Math.random(), c: state.pos[who].c, r: state.pos[who].r, p: who });
+      const next = applyAction(state, a);
+      if (next.turn !== who || next.winner) plan = [];
+      state = next;
+      setG(next);
+      timer = setTimeout(tick, next.winner ? 2200 : a.type === "end" ? 260 : 740);
+    };
+    timer = setTimeout(tick, 1000);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, []);
+
   const cells = [];
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push(key(c, r));
-  const tok = { "1,1": "sol", "3,2": "noc" };
-  const wall = { "2,1": 1, "2,2": 1 };
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push([c, r]);
   return (
     <div className="gd-mini" aria-hidden="true">
-      {cells.map((k) => (
-        <span key={k} className={k === "0,0" ? "s1" : k === `${COLS - 1},${ROWS - 1}` ? "s2" : ""}>
-          {tok[k] ? <i className={tok[k]} /> : wall[k] ? <em /> : null}
-        </span>
-      ))}
+      <div className="gd-mini-in">
+        {cells.map(([c, r]) => {
+          const hp = g.walls[key(c, r)];
+          return (
+            <span key={key(c, r)} className={spawnOwner(c, r) === 1 ? "s1" : spawnOwner(c, r) === 2 ? "s2" : ""}>
+              {hp ? <em className={hp === 1 ? "cracked" : ""} /> : null}
+            </span>
+          );
+        })}
+        {fx ? <b key={fx.id} className={`gd-mini-fx p${fx.p}`} style={{ "--c": fx.c, "--r": fx.r }} /> : null}
+        {[1, 2].map((p) => (
+          <div key={p} className={`gd-mini-tok${g.winner && g.winner !== p ? " out" : ""}${g.winner === p ? " won" : ""}${!g.winner && g.turn === p ? " turn" : ""}`} style={{ "--c": g.pos[p].c, "--r": g.pos[p].r }}>
+            <i className={p === 1 ? "sol" : "noc"} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -949,7 +1034,12 @@ function LeaderboardPage({ account, onAccount }) {
 
 function Lobby({ online, onCancel }) {
   const [copied, setCopied] = useState(false);
+  const [waited, setWaited] = useState(0);
   const snap = online.snap;
+  useEffect(() => {
+    const id = setInterval(() => setWaited((x) => x + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
   const link = snap ? `${window.location.origin}${window.location.pathname}?room=${snap.code}` : "";
   const copy = async () => {
     try {
@@ -988,29 +1078,55 @@ function Lobby({ online, onCancel }) {
       </div>
     );
   }
+
+  const me = snap.players[snap.you];
+  const foeSide = foeOf(snap.you);
+  const ranked = snap.mode === "ranked";
+  const clock = `${Math.floor(waited / 60)}:${String(waited % 60).padStart(2, "0")}`;
   return (
-    <div className="gd-center">
-      <section className="gd-panel pad">
-        <p className="gd-eyebrow">{snap.public ? "Public room" : "Private match"}</p>
-        <h1 className="gd-h1">{snap.public ? "Waiting for a challenger" : "Invite a friend"}</h1>
-        <p className="gd-panel-p">
-          {snap.public
-            ? "Your room is in the Rooms list on the home page, so anyone can join. You can also send this link."
-            : "Send them this link. The match starts as soon as they open it."}
-        </p>
-        <div className="gd-facts">
-          <span>You play <b style={{ color: SIDE[snap.you].color }}>{SIDE[snap.you].name}</b></span>
-          <span>{snap.mode === "ranked" ? "★ Ranked · blitz clock" : "Casual · 30s turns"}</span>
-          <span>Code <b className="mono">{snap.code}</b></span>
+    <div className="gd-wait">
+      <header className="gd-wait-head">
+        <p className="gd-eyebrow">{ranked ? "★ Ranked" : "Casual"} · {snap.public ? "public room" : "private room"}</p>
+        <h1>{snap.public ? "Finding an opponent" : "Waiting for your friend"}</h1>
+      </header>
+
+      <div className="gd-versus">
+        <div className="gd-vcard" style={{ color: SIDE[snap.you].color }}>
+          <span className="gd-vtok" />
+          <span className="gd-vinfo">
+            <b>{me.name || "You"}{me.rating != null ? <i> {me.rating}</i> : null}</b>
+            <small>{SIDE[snap.you].name} · {snap.you === 1 ? "moves first" : "moves second"}</small>
+          </span>
         </div>
-        <div className="gd-linkbox">
-          <span>{link}</span>
-          <button onClick={copy}>{copied ? "Copied" : "Copy"}</button>
+        <span className="gd-vvs">VS</span>
+        <div className="gd-vcard empty" style={{ color: SIDE[foeSide].color }}>
+          <span className="gd-vtok seek" />
+          <span className="gd-vinfo">
+            <b><span className="gd-dots">Searching</span></b>
+            <small>{SIDE[foeSide].name} · {clock}</small>
+          </span>
         </div>
-        {navigator.share ? <button className="gd-btn primary block" onClick={share}>Share link</button> : <button className="gd-btn primary block" onClick={copy}>{copied ? "Link copied" : "Copy link"}</button>}
-        <p className="gd-waiting"><i /><span className="gd-dots">{snap.public ? "Waiting for an opponent" : "Waiting for your friend"}</span></p>
-        <button className="gd-btn block" onClick={onCancel}>Cancel</button>
-      </section>
+      </div>
+
+      <div className="gd-wait-grid">
+        <Panel title={snap.public ? "Or invite a friend" : "Invite your friend"}>
+          <p className="gd-panel-p">{snap.public ? "Your room is in the Rooms list, so anyone can join. Send this link to bring someone specific." : "This room is hidden. The match starts as soon as they open the link."}</p>
+          <div className="gd-linkbox">
+            <span>{link}</span>
+            <button onClick={copy}>{copied ? "Copied" : "Copy"}</button>
+          </div>
+          {navigator.share ? <button className="gd-btn block" style={{ marginTop: 10 }} onClick={share}>Share link</button> : null}
+        </Panel>
+        <Panel title="This match">
+          <dl className="gd-facts2">
+            <div><dt>Room code</dt><dd className="mono">{snap.code}</dd></div>
+            <div><dt>Mode</dt><dd>{ranked ? "Ranked · rating on the line" : "Casual · no rating"}</dd></div>
+            <div><dt>Turn clock</dt><dd>{ranked ? "20s, speeding up to 4s" : "30s a turn"}</dd></div>
+          </dl>
+        </Panel>
+      </div>
+
+      <button className="gd-btn" onClick={onCancel}>Cancel and go back</button>
     </div>
   );
 }
