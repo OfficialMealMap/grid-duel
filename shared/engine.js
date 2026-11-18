@@ -386,9 +386,9 @@ function chooseTurn(s, level = "normal") {
 
 /* ------------------------------------------------------------ Eclipse Mode */
 const ECLIPSE_SECONDS = 20; // first round
-const ECLIPSE_MIN = 3; // the clock never drops below this
+const ECLIPSE_MIN = 4; // the clock never drops below this
 const ECLIPSE_SHRINK = 0.85; // each round is about 15% shorter than the last
-/* seconds on the clock for a given round: 20, 17, 14, 12, 10, 9 ... 3 */
+/* seconds on the clock for a given round: 20, 17, 14, 12, 10, 9 ... 4 */
 const eclipseSeconds = (round) => Math.max(ECLIPSE_MIN, Math.round(ECLIPSE_SECONDS * Math.pow(ECLIPSE_SHRINK, round - 1)));
 
 export {

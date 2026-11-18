@@ -194,23 +194,10 @@ const CSS = `
 .gd-roomempty { text-align: center; font-size: 13px; color: var(--faint); padding: 18px 10px; border: 1px dashed var(--line); border-radius: 12px; }
 /* ---------- app shell ---------- */
 .gd-app { min-height: 100vh; display: flex; flex-direction: column; animation: gd-fadein .3s ease both; }
-.gd-nav { position: sticky; top: 0; z-index: 20; background: rgba(8,10,21,.78); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
-.gd-nav-in { max-width: 1160px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 28px; }
-.gd-brand { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; cursor: pointer; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--ink) !important; padding: 0; white-space: nowrap; }
-.gd-brand-mark { position: relative; width: 26px; height: 18px; flex: 0 0 26px; }
-.gd-brand-mark i { position: absolute; top: 0; width: 18px; height: 18px; border-radius: 50%; }
-.gd-brand-mark i:first-child { left: 0; background: var(--sol); }
-.gd-brand-mark i:last-child { right: 0; background: var(--noc); mix-blend-mode: screen; }
-.gd-nav-links { display: flex; gap: 4px; flex: 1; min-width: 0; }
-.gd-nav-links button { background: none; border: 0; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--dim) !important; padding: 8px 12px; border-radius: 8px; position: relative; white-space: nowrap; transition: color .15s, background .15s; }
-.gd-nav-links button:hover { color: var(--ink) !important; background: rgba(255,255,255,.05); }
-.gd-nav-links button.on { color: var(--ink) !important; }
-.gd-nav-links button.on::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -11px; height: 2px; border-radius: 2px; background: var(--sol); }
-.gd-nav-right { display: flex; align-items: center; gap: 10px; }
-.gd-page { flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 32px 24px 56px; }
-.gd-foot { border-top: 1px solid var(--line); padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; max-width: 1160px; width: 100%; margin: 0 auto; font-size: 12.5px; color: var(--faint); }
-.gd-foot button { background: none; border: 0; cursor: pointer; color: var(--dim) !important; font-size: 12.5px; margin-left: 16px; padding: 0; }
-.gd-foot button:hover { color: var(--ink) !important; }
+.gd-corner { width: 100%; max-width: 1160px; margin: 0 auto; padding: 16px 24px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gd-corner-right { display: flex; align-items: center; gap: 10px; }
+.gd-herolinks { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.gd-page { flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 20px 24px 48px; }
 
 .gd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.04); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink) !important; white-space: nowrap; transition: background .15s, border-color .15s, transform .1s, box-shadow .15s; }
 .gd-btn:hover:not(:disabled) { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); }
@@ -313,11 +300,8 @@ const CSS = `
   .gd-mini { display: none; }
 }
 @media (max-width: 720px) {
-  .gd-nav-in { height: auto; padding: 10px 16px 0; flex-wrap: wrap; gap: 8px 12px; }
-  .gd-nav-links { order: 3; flex: 0 0 100%; overflow-x: auto; margin: 0 -8px; }
-  .gd-nav-links button.on::after { bottom: 0; }
-  .gd-nav-right { margin-left: auto; }
-  .gd-page { padding: 20px 16px 40px; }
+  .gd-page { padding: 14px 16px 40px; }
+  .gd-corner { padding: 12px 16px 0; }
   .gd-hero { padding: 22px; }
   .gd-modes { grid-template-columns: 1fr; }
   .gd-mode-meta { height: auto; }
@@ -380,6 +364,27 @@ const CSS = `
 @media (max-width: 720px) {
   .gd-home { grid-template-columns: 1fr; grid-template-areas: "hero" "left" "right"; gap: 16px; }
 }
+.gd-playrow.online { margin: 0 0 8px; }
+.gd-btn.stack { height: 58px; flex-direction: column; gap: 2px; padding: 0 8px; }
+.gd-btn.lockedbtn { background: rgba(242,169,59,.12); color: var(--sol) !important; border-color: rgba(242,169,59,.35); box-shadow: none; }
+.gd-btn.lockedbtn:hover:not(:disabled) { background: rgba(242,169,59,.2); box-shadow: none; }
+.gd-mtag { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 1px 6px; border-radius: 5px; margin-right: 7px; background: rgba(255,255,255,.07); color: var(--dim); }
+.gd-mtag.ranked { background: rgba(242,169,59,.16); color: var(--sol); }
+.gd-newroom { flex-wrap: wrap; }
+.gd-lives.strikes span.on { color: var(--danger); }
+.gd-lives.strikes span { font-weight: 700; }
+.gd-warn { position: absolute; left: 0; right: 0; top: -6px; z-index: 9; display: flex; justify-content: center; pointer-events: none; }
+.gd-stage.warned { animation: gd-redpulse .7s ease-in-out infinite; }
+.gd-stage.warned::after { box-shadow: 0 0 0 2px var(--danger), 0 0 50px rgba(255,93,115,.45); }
+@keyframes gd-redpulse { 0%,100% { box-shadow: 0 30px 60px rgba(0,0,0,.45), 0 0 0 0 rgba(255,93,115,.55) } 50% { box-shadow: 0 30px 60px rgba(0,0,0,.45), 0 0 0 14px rgba(255,93,115,0) } }
+.gd-setting.col { flex-direction: column; align-items: stretch; gap: 10px; }
+.gd-setting.col p { margin: 0; }
+.gd-playrow.last { margin-bottom: 0; }
+.gd-warn-in { display: flex; align-items: center; gap: 12px; text-align: left; padding: 8px 16px; border-radius: 16px; background: rgba(20,10,16,.94); border: 1.5px solid var(--danger); box-shadow: 0 0 0 6px rgba(255,93,115,.12), 0 20px 50px rgba(0,0,0,.6); animation: gd-warnpop .35s cubic-bezier(.3,1.5,.5,1) both, gd-urgent .9s ease-in-out .35s infinite; }
+.gd-warn-in b { display: block; font-size: 16px; white-space: nowrap; font-weight: 700; letter-spacing: -.02em; color: var(--danger); }
+.gd-warn-in strong { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 30px; line-height: 1; min-width: 1ch; color: var(--ink); font-variant-numeric: tabular-nums; }
+.gd-warn-in small { font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+@keyframes gd-warnpop { from { transform: scale(.8); opacity: 0 } to { transform: none; opacity: 1 } }
 .gd-menu-foot { margin-top: 22px; color: var(--faint); font-size: 12.5px; text-align: center; }
 
 /* ---------- play screen ---------- */
@@ -557,7 +562,9 @@ const CSS = `
 
 const RULES = [
   ["◎", <><b>Win</b> by moving onto your opponent's square.</>],
-  ["☾", <><b>Eclipse Mode</b> (in Settings). The turn clock starts at 20 seconds and shrinks every round, down to 3. Run out and you lose one of 3 lives, and a careful move is made for you. Lose all 3 and you lose the match.</>],
+  ["★", <><b>Ranked</b> (online, signed in). A blitz clock starts at 20 seconds a turn and shrinks every round, down to 4. Run out and you lose one of 3 lives and a careful move is made for you. Lose all 3 and you lose. Your rating is on the line.</>],
+  ["◌", <><b>Casual</b> (online, anyone). 30 seconds a turn. Run out and the board pulses red with a 5-second countdown. If you still haven't moved, you forfeit. No rating.</>],
+  ["☾", <><b>Eclipse Mode</b> is an option when you start a game against the computer or on the same screen. It adds the ranked blitz clock.</>],
   ["✛", <><b>Step</b> one square up, down, left or right, never diagonally. Each step costs 1 energy.</>],
   ["↷", <><b>Corner jump.</b> From either pad beside your own spawn, hop straight to the other pad. Your base only.</>],
   ["⤺", <><b>No going back.</b> You can't step onto the square you just left, unless it captures or it's your only step.</>],
@@ -598,6 +605,46 @@ function Toggle({ on, onChange, label }) {
   );
 }
 
+/* Options chosen right before an offline game starts. */
+function SetupModal({ kind, level, setLevel, eclipse, setEclipse, onClose, onStart }) {
+  useEffect(() => {
+    const h = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  const about = { easy: "Makes mistakes often. Good for learning.", normal: "Thinks a move ahead and slips now and then.", hard: "Thinks further ahead and doesn't blunder." };
+  return (
+    <div className="gd-modal" onClick={onClose}>
+      <div className="gd-modal-card" style={{ width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Game setup">
+        <p className="gd-eyebrow" style={{ margin: "0 0 6px" }}>{kind === "computer" ? "Versus computer" : "Same screen · two players"}</p>
+        <h2>Set up your game</h2>
+        {kind === "computer" ? (
+          <div className="gd-setting col">
+            <b>Difficulty</b>
+            <div className="gd-seg">
+              {["easy", "normal", "hard"].map((l) => (
+                <button key={l} className={l === level ? "on" : ""} onClick={() => { SFX.click(); setLevel(l); }}>{l}</button>
+              ))}
+            </div>
+            <p>{about[level]}</p>
+          </div>
+        ) : null}
+        <div className="gd-setting">
+          <div>
+            <b>☾ Eclipse Mode</b>
+            <p>Adds the blitz clock: {ECLIPSE_SECONDS} seconds a turn, shrinking each round to {ECLIPSE_MIN}. Run out and you lose one of 3 lives.</p>
+          </div>
+          <Toggle on={eclipse} onChange={setEclipse} label="Eclipse Mode" />
+        </div>
+        <div className="gd-over-btns" style={{ marginTop: 18 }}>
+          <button className="gd-cta" style={{ flex: "2 1 0", whiteSpace: "nowrap" }} onClick={() => { SFX.click(); onStart(); }}>Start game</button>
+          <button className="gd-cta ghost" style={{ flex: "1 1 0" }} onClick={onClose}>Back</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SettingsModal({ onClose, eclipse, setEclipse, muted, setMuted, inMatch }) {
   useEffect(() => {
     const h = (e) => e.key === "Escape" && onClose();
@@ -608,14 +655,6 @@ function SettingsModal({ onClose, eclipse, setEclipse, muted, setMuted, inMatch 
     <div className="gd-modal" onClick={onClose}>
       <div className="gd-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Settings">
         <h2>Settings</h2>
-        <div className="gd-setting">
-          <div>
-            <b>☾ Eclipse Mode</b>
-            <p>Every turn is on a clock that starts at {ECLIPSE_SECONDS} seconds and gets shorter each round, down to {ECLIPSE_MIN}. Run out and you lose one of 3 lives, and a careful move is made for you. Lose all 3 and you lose the match.</p>
-            {inMatch ? <small>Takes effect from your next match.</small> : null}
-          </div>
-          <Toggle on={eclipse} onChange={setEclipse} label="Eclipse Mode" />
-        </div>
         <div className="gd-setting">
           <div>
             <b>Sound</b>
@@ -647,37 +686,17 @@ function AccountChip({ account, onAccount }) {
   );
 }
 
-const NAV = [["menu", "Play"], ["leaders", "Leaderboard"]];
-
-function Shell({ screen, go, account, onAccount, onSettings, onRules, children }) {
+function Shell({ screen, go, account, onAccount, onSettings, children }) {
   return (
     <div className="gd-app">
-      <header className="gd-nav">
-        <div className="gd-nav-in">
-          <button className="gd-brand" onClick={() => go("menu")} aria-label="Grid Duel home">
-            <span className="gd-brand-mark"><i /><i /></span>
-            <span>Grid Duel</span>
-          </button>
-          <nav className="gd-nav-links" aria-label="Main">
-            {NAV.map(([id, name]) => (
-              <button key={id} className={screen === id || (id === "menu" && screen === "online") ? "on" : ""} onClick={() => { SFX.click(); go(id); }}>{name}</button>
-            ))}
-            <button onClick={onRules}>How to play</button>
-          </nav>
-          <div className="gd-nav-right">
-            <button className="gd-btn icon" onClick={onSettings} aria-label="Settings">⚙</button>
-            <AccountChip account={account} onAccount={onAccount} />
-          </div>
+      <div className="gd-corner">
+        {screen === "leaders" ? <button className="gd-btn" onClick={() => { SFX.click(); go("menu"); }}>← Back</button> : <span />}
+        <div className="gd-corner-right">
+          <button className="gd-btn icon" onClick={onSettings} aria-label="Settings">⚙</button>
+          <AccountChip account={account} onAccount={onAccount} />
         </div>
-      </header>
+      </div>
       <main className="gd-page">{children}</main>
-      <footer className="gd-foot">
-        <span>Grid Duel · Solaris vs Noctis</span>
-        <span>
-          <button onClick={onRules}>How to play</button>
-          <button onClick={onSettings}>Settings</button>
-        </span>
-      </footer>
     </div>
   );
 }
@@ -756,7 +775,7 @@ function MiniBoard() {
 
 function RoomList({ rooms, onJoin }) {
   if (rooms === null) return <div className="gd-emptybox">Loading rooms…</div>;
-  if (rooms.length === 0) return <div className="gd-emptybox">No rooms yet.<br />Press Quick Match to open the first one.</div>;
+  if (rooms.length === 0) return <div className="gd-emptybox">No rooms yet.<br />Press Ranked or Casual to open the first one.</div>;
   return (
     <ul className="gd-table gd-roomtable">
       {rooms.map((r) => (
@@ -764,10 +783,10 @@ function RoomList({ rooms, onJoin }) {
           <span className="gd-roomcode">{r.code}</span>
           <span className="grow">
             <b>{r.host}{r.rating != null ? <i className="gold"> {r.rating}</i> : null}</b>
-            <small>{r.players}/2 · {r.open ? "waiting for a player" : "playing"}{r.eclipse ? " · ☾ Eclipse" : ""}</small>
+            <small><em className={`gd-mtag ${r.mode}`}>{r.mode === "ranked" ? "★ Ranked" : "Casual"}</em>{r.players}/2 · {r.open ? "waiting" : "playing"}</small>
           </span>
           {r.open ? (
-            <button className="gd-btn primary sm" onClick={() => { SFX.click(); onJoin(r.code); }}>Join</button>
+            <button className="gd-btn primary sm" onClick={() => { SFX.click(); onJoin(r.code, r.mode); }}>Join</button>
           ) : (
             <span className="gd-full">Full</span>
           )}
@@ -777,7 +796,7 @@ function RoomList({ rooms, onJoin }) {
   );
 }
 
-function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, account, onAccount, guestName, setGuestName, onQuick, onCreate, onJoin }) {
+function Home({ onSetup, onRules, onLeaders, account, onAccount, guestName, setGuestName, onQuick, onCreate, onJoin }) {
   const rooms = useOpenRooms();
   const pr = account.profile;
   const signedIn = !!pr;
@@ -786,7 +805,12 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, a
   const nameRef = useRef(null);
   const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   const rate = pr && pr.games ? Math.round((pr.wins / pr.games) * 100) : 0;
-  const openCount = rooms ? rooms.filter((r) => r.open).length : 0;
+  // ranked needs an account: guests get the sign-in box instead
+  const ranked = (fn) => () => {
+    SFX.click();
+    if (!signedIn) return onAccount();
+    fn();
+  };
 
   // online play needs a name: your account's, or one a guest types in
   const withName = (fn) => () => {
@@ -806,7 +830,10 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, a
         <h1><span>Solaris</span> <small>vs</small> <em>Noctis</em></h1>
         <p className="gd-lede">Step, strike and wall your way across the board. Land on your opponent to win.</p>
         <MiniBoard />
-        <button className="gd-textbtn" onClick={onRules}>How to play →</button>
+        <div className="gd-herolinks">
+          <button className="gd-btn" onClick={() => { SFX.click(); onRules(); }}>How to play</button>
+          <button className="gd-btn" onClick={() => { SFX.click(); onLeaders(); }}>Leaderboard</button>
+        </div>
       </section>
 
       <div className="gd-col left">
@@ -824,11 +851,11 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, a
                 className={`gd-input${nameErr ? " err" : ""}`}
                 value={guestName}
                 maxLength={16}
-                placeholder="Pick a name to play online"
+                placeholder="Pick a name to play"
                 onChange={(e) => { setGuestName(e.target.value); setNameErr(false); }}
                 aria-invalid={nameErr}
               />
-              {nameErr ? <em role="alert">Enter a name (at least 2 characters) to play online.</em> : null}
+              {nameErr ? <em role="alert">Enter a name (at least 2 characters) to play.</em> : null}
             </label>
           )}
 
@@ -836,8 +863,8 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, a
             <h4>Your stats</h4>
             <div className="gd-statgrid" aria-hidden={!signedIn}>
               <div className="gd-stat"><b className="gold">{signedIn ? pr.rating : 1000}</b><span>Rating</span></div>
-              <div className="gd-stat"><b>{signedIn ? `${pr.wins}–${pr.losses}` : "0–0"}</b><span>Won–lost</span></div>
-              <div className="gd-stat"><b>{signedIn ? `${rate}%` : "0%"}</b><span>Win rate</span></div>
+              <div className="gd-stat"><b>{signedIn ? `${pr.wins}–${pr.losses}` : "0–0"}</b><span>Ranked W–L</span></div>
+              <div className="gd-stat"><b>{signedIn ? `${pr.casual_wins || 0}–${pr.casual_losses || 0}` : "0–0"}</b><span>Casual W–L</span></div>
               <div className="gd-stat"><b>{signedIn ? pr.best_streak : 0}</b><span>Best streak</span></div>
             </div>
             {!signedIn ? (
@@ -856,34 +883,38 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, a
         </Panel>
 
         <Panel title="Play now">
-          <button className="gd-btn primary lg block" onClick={withName(onQuick)}>
-            Quick Match
-            <small>{rooms === null ? "online" : openCount ? `${openCount} room${openCount === 1 ? "" : "s"} waiting` : "online · opens a room"}</small>
-          </button>
-          <div className="gd-playrow">
-            <button className="gd-btn lg" onClick={() => { SFX.click(); onStart({ aiSide: 2, level, timer }); }}>vs Computer</button>
-            <button className="gd-btn lg" onClick={() => { SFX.click(); onStart({ aiSide: 0, level, timer }); }}>Same Screen</button>
+          <div className="gd-playrow online">
+            <button className={`gd-btn primary lg stack${signedIn ? "" : " lockedbtn"}`} onClick={ranked(() => onQuick("ranked"))}>
+              {signedIn ? "★ Ranked" : "🔒 Ranked"}
+              <small>{signedIn ? "blitz clock · rated" : "sign in to play"}</small>
+            </button>
+            <button className="gd-btn lg stack" onClick={withName(() => onQuick("casual"))}>
+              Casual
+              <small>relaxed · no rating</small>
+            </button>
           </div>
-          <div className="gd-optrow">
-            <span>Computer</span>
-            <div className="gd-seg">
-              {["easy", "normal", "hard"].map((l) => (
-                <button key={l} className={l === level ? "on" : ""} onClick={() => { SFX.click(); setLevel(l); }}>{l}</button>
-              ))}
-            </div>
+          <div className="gd-playrow last">
+            <button className="gd-btn lg stack" onClick={withName(() => onSetup("computer"))}>
+              vs Computer
+              <small>pick difficulty</small>
+            </button>
+            <button className="gd-btn lg stack" onClick={withName(() => onSetup("local"))}>
+              Same Screen
+              <small>two players</small>
+            </button>
           </div>
-          <button className={`gd-pill${eclipse ? " on" : ""}`} onClick={onSettings}>☾ Eclipse Mode {eclipse ? "on" : "off"}<span>Change</span></button>
         </Panel>
       </div>
 
       <div className="gd-col right">
         <Panel title="Rooms" live action={<span className="gd-count">{rooms ? rooms.length : 0}</span>}>
-          <RoomList rooms={rooms} onJoin={(c) => withName(() => onJoin(c))()} />
+          <RoomList rooms={rooms} onJoin={(c, mode) => (mode === "ranked" ? ranked(() => onJoin(c))() : withName(() => onJoin(c))())} />
           <div className="gd-roomfoot">
             <div className="gd-newroom">
               <span>New room</span>
-              <button className="gd-btn sm" onClick={withName(() => onCreate(true))}>Public</button>
-              <button className="gd-btn sm" onClick={withName(() => onCreate(false))}>Private link</button>
+              <button className="gd-btn sm" onClick={ranked(() => onCreate(true, "ranked"))}>★ Ranked</button>
+              <button className="gd-btn sm" onClick={withName(() => onCreate(true, "casual"))}>Casual</button>
+              <button className="gd-btn sm" onClick={withName(() => onCreate(false, "casual"))}>Private link</button>
             </div>
             <form className="gd-joinrow" onSubmit={(e) => { e.preventDefault(); if (clean.length === 6) withName(() => onJoin(clean))(); }}>
               <input className="gd-input" value={clean} onChange={(e) => setCode(e.target.value)} placeholder="Have a code?" aria-label="Room code" />
@@ -969,7 +1000,7 @@ function Lobby({ online, onCancel }) {
         </p>
         <div className="gd-facts">
           <span>You play <b style={{ color: SIDE[snap.you].color }}>{SIDE[snap.you].name}</b></span>
-          <span>{snap.eclipse ? "☾ Eclipse Mode" : "Classic"}</span>
+          <span>{snap.mode === "ranked" ? "★ Ranked · blitz clock" : "Casual · 30s turns"}</span>
           <span>Code <b className="mono">{snap.code}</b></span>
         </div>
         <div className="gd-linkbox">
@@ -1110,9 +1141,9 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     if (lastSeq.current >= 0 && L && seq === lastSeq.current + 1) {
       if (L.timeout) {
         SFX.timeout();
-        say(L.who, `ran out of time · lost a life (${L.livesLeft} left) · auto-move`);
+        say(L.who, casual ? `ran out of time · strike ${LIVES - L.livesLeft} of ${LIVES} · auto-move` : `ran out of time · lost a life (${L.livesLeft} left) · auto-move`);
         const id = Math.random();
-        setSplash({ id, p: L.who, text: `Time's up · ${L.livesLeft} ${L.livesLeft === 1 ? "life" : "lives"} left` });
+        setSplash({ id, p: L.who, text: casual ? `Strike ${LIVES - L.livesLeft} of ${LIVES}` : `Time's up · ${L.livesLeft} ${L.livesLeft === 1 ? "life" : "lives"} left` });
         setTimeout(() => setSplash((x) => (x && x.id === id ? null : x)), 900);
       } else if (L.action) {
         playFx(before, L.action, online.game);
@@ -1120,7 +1151,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     }
     if (online.result && !before.winner) {
       const r = online.result;
-      if (r.reason === "time") say(foeOf(r.winner), "ran out of time with no lives left");
+      if (r.reason === "time") say(foeOf(r.winner), casual ? "didn't move in time · forfeit" : "ran out of time with no lives left");
       if (r.reason === "left") say(foeOf(r.winner), "left the match");
       if (r.reason === "resign") say(foeOf(r.winner), "resigned");
     }
@@ -1178,10 +1209,12 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
 
   /* turn clock: humans only, starts after the turn splash, pauses while rules are open */
   const limit = online ? online.limitMs : config.timer ? eclipseSeconds(round) * 1000 : 0;
-  const urgentAt = Math.min(5000, limit * 0.4);
+  const urgentAt = online && online.warning ? limit : Math.min(5000, limit * 0.4);
   const [left, setLeft] = useState(limit);
   const [autoL, setAutoPlaying] = useState(false);
   const LIVES = 3;
+  const casual = !!online && online.mode !== "ranked";
+  const warned = !!online && !!online.warning && !online.result; // casual: final countdown before a strike
   const [livesL, setLives] = useState({ 1: LIVES, 2: LIVES });
   const [forfeitL, setForfeit] = useState(0); // the player who ran out of lives
   // online, these all come from the server
@@ -1344,6 +1377,8 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   const foeSeat = online ? foeOf(seat) : 0;
   const hint = s.winner
     ? ""
+    : warned && s.turn !== seat
+    ? <>Your opponent is out of time. If they don't move in the next few seconds, you win.</>
     : online && away(foeSeat)
     ? <>Your opponent lost connection. If they aren't back within 90 seconds, you win.</>
     : online && s.turn !== seat
@@ -1363,7 +1398,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   const overLine = !s.winner
     ? ""
     : forfeit
-    ? `${SIDE[forfeit].name} ran out of time · round ${round}`
+    ? `${SIDE[forfeit].name} ${casual ? "didn't move in time · forfeit" : "ran out of time"} · round ${round}`
     : result && result.reason === "left"
     ? `${SIDE[foeOf(s.winner)].name} left the match · round ${round}`
     : result && result.reason === "resign"
@@ -1384,7 +1419,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     <div className="gd-play" style={{ "--turn": SIDE[p].color }}>
       <div className="gd-top">
         <button className="gd-iconbtn" onClick={leave} aria-label={online ? "Leave match" : "Back to menu"}>{online ? "← Leave" : "← Menu"}</button>
-        <div className="gd-round">Round <b>{round}</b>{limit ? <span className="gd-modechip">☾ Eclipse · {limit / 1000}s</span> : null}</div>
+        <div className="gd-round">Round <b>{round}</b>{online ? <span className="gd-modechip">{casual ? "Casual" : `★ Ranked · ${limit / 1000}s`}</span> : limit ? <span className="gd-modechip">☾ Eclipse · {limit / 1000}s</span> : null}</div>
         <div className="gd-topr">
           <button className="gd-iconbtn" onClick={onRules} aria-label="How to play">?</button>
           <button className="gd-iconbtn" onClick={onSettings} aria-label="Settings">⚙</button>
@@ -1395,7 +1430,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
         {[1, 2].map((id, idx) => {
           const live = p === id && !s.winner;
           const total = s.energy[id];
-          const timed = limit > 0 && aiSide !== id;
+          const timed = online ? true : limit > 0 && aiSide !== id;
           const frac = live && timed ? left / limit : 1;
           const urgent = live && timed && !autoPlaying && left <= urgentAt;
           return (
@@ -1416,11 +1451,13 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                   <small>{status(id)}</small>
                 </span>
                 {timed ? (
-                  <span className="gd-lives" title={`${lives[id]} of ${LIVES} timeout lives left`}>
-                    {Array.from({ length: LIVES }).map((_, i) => (
-                      <span key={i} className={i < lives[id] ? "on" : ""}>♥</span>
-                    ))}
-                  </span>
+                  casual ? null : (
+                    <span className="gd-lives" title={`${lives[id]} of ${LIVES} timeout lives left`}>
+                      {Array.from({ length: LIVES }).map((_, i) => (
+                        <span key={i} className={i < lives[id] ? "on" : ""}>♥</span>
+                      ))}
+                    </span>
+                  )
                 ) : null}
                 <span className="gd-orbsrow" title={live ? `${s.ctx.pool} of ${total} energy left` : `${total} energy next turn`}>
                   {Array.from({ length: total }).map((_, i) => (
@@ -1433,7 +1470,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
         })}
       </div>
 
-      <div className="gd-stage">
+      <div className={`gd-stage${warned ? " warned" : ""}`}>
         <div ref={boardRef} className="gd-board">
           {Array.from({ length: ROWS }).map((_, r) =>
             Array.from({ length: COLS }).map((__, c) => {
@@ -1551,10 +1588,20 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
             />
           ) : null}
 
+          {warned && s.turn === seat && !autoPlaying ? (
+            <div className="gd-warn" role="alert">
+              <div className="gd-warn-in">
+                <strong>{secs}</strong>
+                <span><b>Your move!</b>
+                <small>Move now or you forfeit the match.</small></span>
+              </div>
+            </div>
+          ) : null}
+
           {splash && !s.winner ? (
             <div className="gd-splash" key={splash.id} style={{ color: SIDE[splash.p].color }}>
               <div className="gd-splash-in">
-                <small>Round {round}{limit && !splash.text ? ` · ${limit / 1000}s per turn` : ""}</small>
+                <small>Round {round}{limit && !splash.text && !warned ? ` · ${limit / 1000}s per turn` : ""}</small>
                 <b>{splash.text || (online ? (splash.p === seat ? "Your turn" : "Opponent's turn") : aiSide === splash.p ? `${SIDE[splash.p].name} moves` : vsAI ? "Your turn" : `${SIDE[splash.p].name}'s turn`)}</b>
               </div>
             </div>
@@ -1581,7 +1628,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                 {result && result.ratings ? (
                   <>Rating <b className={result.ratings[seat] >= 0 ? "up" : "down"}>{result.ratings[seat] >= 0 ? "+" : ""}{result.ratings[seat]}</b></>
                 ) : result && result.saved ? (
-                  online.players[seat].signedIn ? <>Saved to your stats. Rating only changes when both players are signed in.</> : <>Sign in to track your stats.</>
+                  online.players[seat].signedIn ? <>Casual match: added to your casual record. Rating only changes in Ranked.</> : <>Sign in to track your stats.</>
                 ) : !online.players[seat].signedIn ? (
                   <>Sign in before a match to track your stats.</>
                 ) : null}
@@ -1737,7 +1784,7 @@ function ProfileModal({ profile, onClose }) {
         <h2>{profile.username}</h2>
         <div className="gd-statgrid">
           <div className="gd-stat"><b style={{ color: "var(--sol)" }}>{profile.rating}</b><span>Rating</span></div>
-          <div className="gd-stat"><b>{profile.wins}–{profile.losses}</b><span>Won–lost</span></div>
+          <div className="gd-stat"><b>{profile.wins}–{profile.losses}</b><span>Ranked W–L</span></div>
           <div className="gd-stat"><b>{rate}%</b><span>Win rate</span></div>
           <div className="gd-stat"><b>{profile.best_streak}</b><span>Best streak</span></div>
         </div>
@@ -1755,8 +1802,8 @@ function ProfileModal({ profile, onClose }) {
               return (
                 <li key={m.id}>
                   <b className={won ? "w" : "l"}>{won ? "Win" : "Loss"}</b>
-                  <span className="grow">vs <b>{foe ? foe.username : "Guest"}</b> · {reason[m.reason]} · round {m.rounds}{m.eclipse ? " · ☾" : ""}</span>
-                  <span className={`num ${delta > 0 ? "w" : delta < 0 ? "l" : ""}`}>{m.rated ? (delta >= 0 ? "+" : "") + delta : "–"}</span>
+                  <span className="grow">vs <b>{foe ? foe.username : "Guest"}</b> · {reason[m.reason]} · round {m.rounds}{m.rated ? " · ranked" : " · casual"}</span>
+                  <span className={`num ${delta > 0 ? "w" : delta < 0 ? "l" : ""}`}>{m.rated ? (delta >= 0 ? "+" : "") + delta : ""}</span>
                 </li>
               );
             })}
@@ -1866,8 +1913,8 @@ export default function GridDuel() {
       if (!w || wsRef.current !== ws) return ws.close();
       if (ws.readyState !== 1) return;
       if (w.code) ws.send(JSON.stringify({ t: "join", code: w.code, token: loadToken(w.code), auth, name }));
-      else if (w.quick) ws.send(JSON.stringify({ t: "quick", eclipse: w.eclipse, auth, name }));
-      else ws.send(JSON.stringify({ t: "create", eclipse: w.eclipse, public: w.public, auth, name }));
+      else if (w.quick) ws.send(JSON.stringify({ t: "quick", mode: w.mode, auth, name }));
+      else ws.send(JSON.stringify({ t: "create", mode: w.mode, public: w.public, auth, name }));
     };
     ws.onmessage = (ev) => {
       let m;
@@ -1972,6 +2019,8 @@ export default function GridDuel() {
     setScreen(to);
   };
   const closeRules = useCallback(() => setRules(false), []);
+  const [setup, setSetup] = useState(null); // "computer" | "local": the pre-game options screen
+  const closeSetup = useCallback(() => setSetup(null), []);
   const closeSettings = useCallback(() => setSettings(false), []);
 
   const snap = online && online.snap;
@@ -1985,7 +2034,7 @@ export default function GridDuel() {
   }, [savedKey]);
 
   const shell = (page) => (
-    <Shell screen={screen} go={go} account={account} onAccount={openAcct} onSettings={() => setSettings(true)} onRules={() => setRules(true)}>
+    <Shell screen={screen} go={go} account={account} onAccount={openAcct} onSettings={() => setSettings(true)}>
       {page}
     </Shell>
   );
@@ -1994,19 +2043,15 @@ export default function GridDuel() {
   if (screen === "menu" || screen === "hub") {
     body = shell(
       <Home
-        level={level}
-        setLevel={setLevel}
-        timer={timer}
-        eclipse={eclipse}
-        onSettings={() => setSettings(true)}
+        onSetup={setSetup}
         onRules={() => setRules(true)}
-        onStart={start}
+        onLeaders={() => setScreen("leaders")}
         account={account}
         onAccount={openAcct}
         guestName={guestName}
         setGuestName={setGuestName}
-        onQuick={() => goOnline({ quick: true, eclipse })}
-        onCreate={(isPublic) => goOnline({ create: true, eclipse, public: isPublic })}
+        onQuick={(mode) => goOnline({ quick: true, mode })}
+        onCreate={(isPublic, mode) => goOnline({ create: true, mode, public: isPublic })}
         onJoin={(code) => goOnline({ code })}
       />
     );
@@ -2049,6 +2094,17 @@ export default function GridDuel() {
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       {body}
       {rules ? <RulesModal onClose={closeRules} /> : null}
+      {setup ? (
+        <SetupModal
+          kind={setup}
+          level={level}
+          setLevel={setLevel}
+          eclipse={eclipse}
+          setEclipse={setEclipse}
+          onClose={closeSetup}
+          onStart={() => { setSetup(null); start({ aiSide: setup === "computer" ? 2 : 0, level, timer }); }}
+        />
+      ) : null}
       {acctModal ? (account.profile ? <ProfileModal profile={account.profile} onClose={closeAcct} /> : account.userId ? null : <SignInModal onClose={closeAcct} />) : null}
       {settings ? (
         <SettingsModal

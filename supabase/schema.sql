@@ -168,3 +168,10 @@ revoke execute on function public.handle_new_user() from public, anon, authentic
 revoke execute on function public.record_match(text, uuid, uuid, integer, text, integer, boolean, timestamptz) from public, anon, authenticated;
 grant execute on function public.record_match(text, uuid, uuid, integer, text, integer, boolean, timestamptz) to service_role;
 grant execute on function public.username_available(text) to anon, authenticated;
+
+-- ------------------------------------------------ ranked and casual modes
+-- Applied later as its own migration: profiles gained casual_wins and
+-- casual_losses, and record_match gained p_ranked (default true). Ranked
+-- matches change rating and the ranked record; casual matches only add to
+-- the casual record. See the Supabase project's migration history for the
+-- exact function body.
