@@ -48,9 +48,10 @@ export async function loadRecentMatches(id) {
   return data || [];
 }
 
-export async function loadLeaderboard() {
+export async function loadLeaderboard(limit = 10) {
+  await initAccount();
   if (!client) return [];
-  const { data } = await client.from("profiles").select("id,username,rating,wins,losses").gt("games", 0).order("rating", { ascending: false }).limit(10);
+  const { data } = await client.from("profiles").select("id,username,rating,wins,losses").gt("games", 0).order("rating", { ascending: false }).limit(limit);
   return data || [];
 }
 
