@@ -425,6 +425,44 @@ const CSS = `
 @keyframes gd-miniwin { 0%,100% { transform: scale(1.1) } 50% { transform: scale(1.4) } }
 .gd-mini-fx { position: absolute; left: calc((var(--c) - 1) * (100% + 5px) / ${COLS}); top: calc((var(--r) - 1) * (100% + 5px) / ${ROWS}); width: calc(3 * (100% + 5px) / ${COLS} - 5px); height: calc(3 * (100% + 5px) / ${ROWS} - 5px); border-radius: 12px; border: 2px solid var(--sol); pointer-events: none; z-index: 1; animation: gd-blast .55s cubic-bezier(.2,.7,.3,1) forwards; }
 .gd-mini-fx.p2 { border-color: var(--noc); }
+/* ---------- animated how-to ---------- */
+.gd-howto { width: min(540px, 100%); padding: 18px 22px; }
+.gd-howto-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.gd-howto-top .gd-eyebrow { margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+.gd-howto h2 { margin: 16px 0 8px; font-size: 22px; letter-spacing: -.02em; }
+.gd-howto-text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--dim); min-height: 67px; }
+.gd-howto-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.gd-howto-nav .gd-btn { min-width: 96px; flex: 0 0 auto; }
+@media (max-width: 480px) { .gd-howto { padding: 16px; } .gd-howto-nav .gd-btn { min-width: 0; padding: 0 12px; } .gd-pager { gap: 5px; } .gd-pager button { width: 6px; height: 6px; } }
+.gd-pager { display: flex; gap: 7px; }
+.gd-pager button { width: 8px; height: 8px; padding: 0; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); cursor: pointer; transition: background .15s, transform .15s; }
+.gd-pager button.on { background: var(--sol); transform: scale(1.35); }
+.gd-demo { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.gd-mini.flat { display: block !important; transform: none; animation: none; width: min(340px, 100%); flex: 0 0 auto; box-shadow: none; background: rgba(8,10,21,.6); }
+.gd-mini.flat .gd-mini-in > span { position: relative; }
+.gd-mini.flat span.pad { background: rgba(242,169,59,.09); }
+.gd-mini.flat u { position: absolute; top: 3px; left: 6px; font-size: 11px; text-decoration: none; color: var(--sol); opacity: .7; }
+.gd-mini.flat s { text-decoration: none; position: absolute; }
+.gd-mini.flat s.dot { width: 24%; aspect-ratio: 1; border-radius: 50%; background: var(--sol); animation: gd-pulse 1.4s ease-in-out infinite; }
+.gd-mini.flat s.bad { font-size: 18px; font-weight: 700; color: var(--danger); animation: gd-warnpop .3s ease both; }
+.gd-mini-tok.hop { transition: left .6s cubic-bezier(.5,-0.4,.3,1.4), top .6s cubic-bezier(.5,-0.4,.3,1.4); }
+.gd-mini-tok.hop i { animation: gd-hop .6s ease; }
+@keyframes gd-hop { 50% { transform: scale(1.5); } }
+.gd-demo-bar { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 34px; }
+.gd-demo-en:empty { display: none; }
+.gd-demo-say { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.35; color: var(--ink); animation: gd-fadeup .3s ease both; }
+.gd-demo-en { display: flex; gap: 5px; align-items: center; }
+.gd-demo-en.noc { justify-content: flex-end; }
+.gd-demo-en i { width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; opacity: .45; transition: all .25s; }
+.gd-demo-en i.on { background: currentColor; opacity: 1; box-shadow: 0 0 8px currentColor; }
+.gd-demo-en.sol { color: var(--sol); } .gd-demo-en.noc { color: var(--noc); }
+.gd-demo-en em { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 9px; white-space: nowrap; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); color: var(--faint); transition: all .25s; }
+.gd-demo-en em.open { color: var(--sol); border-color: var(--sol); background: rgba(242,169,59,.12); }
+.gd-modelist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.gd-modelist li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; }
+.gd-modelist li > span { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.06); color: var(--dim); }
+.gd-modelist li > span.sol { background: rgba(242,169,59,.14); color: var(--sol); } .gd-modelist li > span.noc { background: rgba(157,132,255,.16); color: var(--noc); }
+.gd-modelist b { font-size: 15px; } .gd-modelist p { margin: 3px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--dim); }
 .gd-menu-foot { margin-top: 22px; color: var(--faint); font-size: 12.5px; text-align: center; }
 
 /* ---------- play screen ---------- */
@@ -600,42 +638,216 @@ const CSS = `
 @media (prefers-reduced-motion: reduce) { .gd-root *, .gd-root *::before, .gd-root *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 `;
 
-const RULES = [
-  ["◎", <><b>Win</b> by moving onto your opponent's square.</>],
-  ["★", <><b>Ranked</b> (online, signed in). A blitz clock starts at 20 seconds a turn and shrinks every round, down to 4. Run out and you lose one of 3 lives and a careful move is made for you. Lose all 3 and you lose. Your rating is on the line.</>],
-  ["◌", <><b>Casual</b> (online, anyone). 30 seconds a turn. Run out and the board pulses red with a 5-second countdown. If you still haven't moved, you forfeit. No rating.</>],
-  ["☾", <><b>Eclipse Mode</b> is an option when you start a game against the computer or on the same screen. It adds the ranked blitz clock.</>],
-  ["✛", <><b>Step</b> one square up, down, left or right, never diagonally. Each step costs 1 energy.</>],
-  ["↷", <><b>Corner jump.</b> From either pad beside your own spawn, hop straight to the other pad. Your base only.</>],
-  ["⤺", <><b>No going back.</b> You can't step onto the square you just left, unless it captures or it's your only step.</>],
-  ["✺", <><b>Strike</b> hits all eight squares around you and only damages walls. A wall takes two strikes to break. Your first strike each turn is free, and each one after that costs 1 energy.</>],
-  ["◆", <><b>Energy.</b> You get 1 each turn. Unspent energy is lost.</>],
-  ["▦", <><b>Walls</b> go beside you, cost 1 and end your turn at once. Your opponent gets 2 energy next turn. Not on spawns.</>],
-  ["⏵", <><b>Keep moving.</b> Every turn needs a step or a wall. Breaking a wall doesn't count, and extra strikes can't spend the energy you need to move. If you're boxed in, break out or end your turn.</>],
+/* How to play: one rule per page, each shown as a small looping scene.
+   A scene is a list of frames; each frame only says what changes.
+     p1 / p2   where each piece stands, as [column, row]
+     walls     { "c,r": hits left }       strike  who strikes this frame
+     dots      squares you could step to  bad     squares you can't
+     en        energy as { 1: [left, total], 2: [left, total] }
+     out       the piece that was captured
+     say       caption under the board    ms      how long the frame shows */
+const LESSONS = [
+  {
+    title: "Land on your opponent to win",
+    text: "Move onto the square your opponent is standing on and the match is yours. So is the reverse: never end your turn right beside them.",
+    scene: [
+      { p1: [1, 1], p2: [4, 2], say: "Noctis is far away", ms: 1300 },
+      { p2: [3, 2], say: "Noctis steps closer", ms: 1000 },
+      { p1: [2, 1], say: "You step closer", ms: 1000 },
+      { p2: [3, 1], say: "Noctis ends its turn beside you", ms: 1500 },
+      { dots: [[3, 1]], say: "Their square is in reach", ms: 1200 },
+      { p1: [3, 1], out: 2, dots: [], say: "Step onto it: you win", ms: 2400 },
+    ],
+  },
+  {
+    title: "Step one square at a time",
+    text: "A step goes up, down, left or right, never diagonally. Each step costs 1 energy, and you get 1 energy every turn.",
+    scene: [
+      { p1: [2, 1], p2: [4, 3], en: { 1: [1, 1] }, dots: [[2, 0], [1, 1], [3, 1], [2, 2]], say: "Four squares you can step to", ms: 1900 },
+      { bad: [[1, 0], [3, 0], [1, 2], [3, 2]], say: "Never diagonally", ms: 1700 },
+      { p1: [3, 1], en: { 1: [0, 1] }, dots: [], bad: [], say: "A step costs 1 energy", ms: 1600 },
+      { p2: [4, 2], say: "Noctis takes its turn", ms: 1100 },
+      { en: { 1: [1, 1] }, say: "New turn: your energy is back", ms: 1700 },
+    ],
+  },
+  {
+    title: "Energy doesn't carry over",
+    text: "Every turn starts with 1 energy. Anything you don't spend is gone when the turn ends, so there's no saving up.",
+    scene: [
+      { p1: [1, 2], p2: [4, 0], en: { 1: [1, 1] }, say: "Your turn: 1 energy", ms: 1500 },
+      { strike: 1, say: "A first strike is free, so you still have it", ms: 1700 },
+      { p1: [2, 2], en: { 1: [0, 1] }, say: "Spend it on a step", ms: 1500 },
+      { p2: [3, 0], say: "Noctis takes its turn", ms: 1100 },
+      { en: { 1: [1, 1] }, say: "Back to 1. Never more, unless they wall", ms: 1900 },
+    ],
+  },
+  {
+    title: "Corner jump",
+    text: "The two squares beside your own spawn are jump pads. Standing on one, you can hop straight to the other for the price of a step. Your base only.",
+    pads: true,
+    scene: [
+      { p1: [0, 0], p2: [4, 2], say: "You start on your spawn", ms: 1300 },
+      { p1: [1, 0], say: "Step onto a pad", ms: 1300 },
+      { p2: [3, 2], say: "Noctis takes its turn", ms: 1000 },
+      { dots: [[0, 1]], say: "The other pad is in reach", ms: 1400 },
+      { p1: [0, 1], dots: [], jump: true, say: "Jump across the corner", ms: 2000 },
+    ],
+  },
+  {
+    title: "No going back",
+    text: "You can't step onto the square you just left. The only exceptions are when it captures your opponent or it's the only step you have.",
+    scene: [
+      { p1: [1, 1], p2: [4, 3], say: "You are here", ms: 1100 },
+      { p1: [2, 1], say: "You step right", ms: 1200 },
+      { p2: [4, 2], say: "Noctis takes its turn", ms: 1000 },
+      { bad: [[1, 1]], dots: [[2, 0], [3, 1], [2, 2]], say: "The square you left is closed", ms: 2300 },
+      { p1: [2, 2], bad: [], dots: [], say: "Pick a different one", ms: 1500 },
+    ],
+  },
+  {
+    title: "Strike to break walls",
+    text: "A strike hits all eight squares around you. It only damages walls, never players. A wall takes two strikes. Your first strike each turn is free; each one after costs 1 energy.",
+    scene: [
+      { p1: [1, 1], p2: [4, 3], walls: { "2,1": 2, "2,2": 2 }, en: { 1: [1, 1] }, say: "Two walls block your way", ms: 1500 },
+      { strike: 1, walls: { "2,1": 1, "2,2": 1 }, say: "Strike: free. Both walls crack", ms: 1900 },
+      { strike: 1, walls: {}, en: { 1: [0, 1] }, say: "Strike again: 1 energy. They fall", ms: 2000 },
+      { p2: [4, 2], say: "Noctis takes its turn", ms: 1000 },
+      { p1: [2, 1], en: { 1: [1, 1] }, say: "The path is open", ms: 1600 },
+    ],
+  },
+  {
+    title: "Walls block, but cost you tempo",
+    text: "Place a wall on a square right beside you. It costs 1 energy and ends your turn at once, and your opponent gets 2 energy on their next turn. Walls can't go on spawns.",
+    scene: [
+      { p1: [1, 1], p2: [3, 1], en: { 1: [1, 1], 2: [1, 1] }, say: "Noctis is two squares away", ms: 1500 },
+      { walls: { "2,1": 2 }, en: { 1: [0, 1], 2: [2, 2] }, say: "Wall it off. Your turn ends", ms: 2000 },
+      { say: "Noctis now has 2 energy", ms: 1600 },
+      { p2: [3, 0], en: { 2: [1, 2] }, say: "It can step twice…", ms: 1100 },
+      { p2: [2, 0], en: { 2: [0, 2] }, say: "…and get around your wall", ms: 2000 },
+    ],
+  },
+  {
+    title: "Keep moving",
+    text: "Every turn has to include a step or a wall. Striking alone doesn't finish a turn, and extra strikes can't use up the energy you need to move. If you're boxed in, break out or end your turn.",
+    scene: [
+      { p1: [1, 1], p2: [4, 2], walls: { "2,1": 2 }, en: { 1: [1, 1] }, end: "locked", say: "Start of your turn", ms: 1300 },
+      { strike: 1, walls: { "2,1": 1 }, say: "You strike. End turn stays locked", ms: 2100 },
+      { p1: [1, 2], en: { 1: [0, 1] }, end: "open", say: "Take a step and it unlocks", ms: 2000 },
+      { end: "", p2: [3, 2], say: "Noctis takes its turn", ms: 1100 },
+    ],
+  },
+  {
+    title: "Three ways to play",
+    text: "",
+    modes: true,
+  },
 ];
 
-function RulesModal({ onClose }) {
+function buildFrame(scene, upTo) {
+  const st = { p1: [0, 0], p2: [COLS - 1, ROWS - 1], walls: {}, dots: [], bad: [], en: {}, out: 0, say: "", end: "", strike: 0, jump: false };
+  for (let i = 0; i <= upTo; i++) {
+    const f = scene[i];
+    Object.assign(st, f, { en: { ...st.en, ...(f.en || {}) }, strike: f.strike || 0, jump: !!f.jump });
+  }
+  return st;
+}
+
+function DemoBoard({ lesson }) {
+  const [i, setI] = useState(0);
+  const scene = lesson.scene;
   useEffect(() => {
-    const h = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+    const t = setTimeout(() => setI((x) => (x + 1) % scene.length), scene[i].ms || 1400);
+    return () => clearTimeout(t);
+  }, [i, scene]);
+  const st = buildFrame(scene, i);
+  const has = (list, c, r) => list.some((x) => x[0] === c && x[1] === r);
+  const cells = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push([c, r]);
+  const striker = st.strike ? st[`p${st.strike}`] : null;
   return (
-    <div className="gd-modal" onClick={onClose}>
-      <div className="gd-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="How to play">
-        <h2>How to play</h2>
-        <ul className="gd-rules">
-          {RULES.map(([ico, text], i) => (
-            <li key={i}><span>{ico}</span><span>{text}</span></li>
+    <div className="gd-demo">
+      <div className="gd-mini flat" aria-hidden="true">
+        <div className="gd-mini-in">
+          {cells.map(([c, r]) => {
+            const hp = st.walls[key(c, r)];
+            const pad = lesson.pads && jumpOwner(c, r) === 1;
+            return (
+              <span key={key(c, r)} className={(spawnOwner(c, r) === 1 ? "s1" : spawnOwner(c, r) === 2 ? "s2" : "") + (pad ? " pad" : "")}>
+                {hp ? <em className={hp === 1 ? "cracked" : ""} /> : null}
+                {pad ? <u>↷</u> : null}
+                {has(st.dots, c, r) ? <s className="dot" /> : null}
+                {has(st.bad, c, r) ? <s className="bad">✕</s> : null}
+              </span>
+            );
+          })}
+          {striker ? <b key={i} className={`gd-mini-fx p${st.strike}`} style={{ "--c": striker[0], "--r": striker[1] }} /> : null}
+          {[1, 2].map((p) => (
+            <div key={p} className={`gd-mini-tok${st.out === p ? " out" : ""}${st.out && st.out !== p ? " won" : ""}${st.jump && p === 1 ? " hop" : ""}`} style={{ "--c": st[`p${p}`][0], "--r": st[`p${p}`][1] }}>
+              <i className={p === 1 ? "sol" : "noc"} />
+            </div>
           ))}
-        </ul>
-        <div className="gd-keys">Keys: M step · S strike · W wall · E end turn · Esc cancel</div>
-        <button className="gd-cta" onClick={onClose}>Got it</button>
+        </div>
+      </div>
+      <div className="gd-demo-bar">
+        <span className="gd-demo-en sol">{st.en[1] ? Array.from({ length: st.en[1][1] }).map((_, k) => <i key={k} className={k < st.en[1][0] ? "on" : ""} />) : null}</span>
+        <span className="gd-demo-say" key={st.say}>{st.say}</span>
+        <span className="gd-demo-en noc">
+          {st.end ? <em className={st.end}>{st.end === "locked" ? "🔒 End turn" : "⏵ End turn"}</em> : st.en[2] ? Array.from({ length: st.en[2][1] }).map((_, k) => <i key={k} className={k < st.en[2][0] ? "on" : ""} />) : null}
+        </span>
       </div>
     </div>
   );
 }
 
+function RulesModal({ onClose }) {
+  const [page, setPage] = useState(0);
+  const last = LESSONS.length - 1;
+  const lesson = LESSONS[page];
+  useEffect(() => {
+    const h = (e) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight") setPage((p) => Math.min(last, p + 1));
+      else if (e.key === "ArrowLeft") setPage((p) => Math.max(0, p - 1));
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose, last]);
+  return (
+    <div className="gd-modal" onClick={onClose}>
+      <div className="gd-modal-card gd-howto" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="How to play">
+        <div className="gd-howto-top">
+          <span className="gd-eyebrow">How to play · {page + 1} of {LESSONS.length}</span>
+          <button className="gd-textbtn" onClick={onClose} aria-label="Close">Close ✕</button>
+        </div>
+        {lesson.modes ? (
+          <ul className="gd-modelist">
+            <li><span className="sol">★</span><div><b>Ranked</b><p>Online, signed in. A blitz clock starts at {ECLIPSE_SECONDS} seconds a turn and shrinks every round, down to {ECLIPSE_MIN}. Run out and you lose one of 3 lives and a careful move is made for you. Your rating is on the line.</p></div></li>
+            <li><span className="noc">◌</span><div><b>Casual</b><p>Online, anyone. 30 seconds a turn. Run out and the board pulses red with a 5-second countdown; if you still haven't moved, you forfeit. No rating.</p></div></li>
+            <li><span>▦</span><div><b>vs Computer and Same Screen</b><p>No clock unless you switch on Eclipse Mode when you set up the game, which adds the ranked blitz clock.</p></div></li>
+          </ul>
+        ) : (
+          <DemoBoard key={page} lesson={lesson} />
+        )}
+        <h2>{lesson.title}</h2>
+        {lesson.text ? <p className="gd-howto-text">{lesson.text}</p> : null}
+        <div className="gd-howto-nav">
+          <button className="gd-btn" disabled={page === 0} onClick={() => { SFX.click(); setPage(page - 1); }}>← Back</button>
+          <div className="gd-pager" role="tablist" aria-label="Rules pages">
+            {LESSONS.map((l, k) => (
+              <button key={k} className={k === page ? "on" : ""} onClick={() => setPage(k)} aria-label={l.title} aria-selected={k === page} role="tab" />
+            ))}
+          </div>
+          {page < last ? (
+            <button className="gd-btn primary" onClick={() => { SFX.click(); setPage(page + 1); }}>Next →</button>
+          ) : (
+            <button className="gd-btn primary" onClick={onClose}>Got it</button>
+          )}
+        </div>
+        <div className="gd-keys">In a match: M step · S strike · W wall · E end turn</div>
+      </div>
+    </div>
+  );
+}
 
 function Toggle({ on, onChange, label }) {
   return (
