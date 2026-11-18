@@ -21,6 +21,8 @@ const LIVES = 3;
 const TURN_GRACE_MS = 1000; // covers the "your turn" splash and network lag
 const ABANDON_MS = 90_000; // a player who stays disconnected this long loses
 const ROOM_IDLE_MS = 60 * 60_000; // empty or finished rooms are cleared after an hour
+const CASUAL_TURN_MS = Number(process.env.CASUAL_TURN_MS) || 45_000; // casual: a slow, fixed turn clock
+const CASUAL_WARN_MS = Number(process.env.CASUAL_WARN_MS) || 10_000; // then a warning; move within this or take a strike
 const AUTO_BEAT_MS = 380; // pace of a timed-out player's automatic move
 const MAX_ROOMS = 5000;
 
@@ -81,7 +83,8 @@ async function recordResult(room) {
         p_winner_side: room.result.winner,
         p_reason: room.result.reason,
         p_rounds: room.round,
-        p_eclipse: room.eclipse,
+        p_eclipse: room.mode === "ranked",
+        p_ranked: room.mode === "ranked",
         p_started_at: new Date(room.startedAt || Date.now()).toISOString(),
       },
     });
@@ -148,10 +151,13 @@ function newCode() {
   }
 }
 
-function newRoom(eclipse, isPublic) {
+/* Two kinds of online match:
+   ranked  signed-in players only, blitz clock that speeds up, rating changes
+   casual  anyone, slow fixed clock with a warning before each strike, no rating */
+function newRoom(mode, isPublic) {
   const room = {
     code: newCode(),
-    eclipse: !!eclipse,
+    mode: mode === "ranked" ? "ranked" : "casual",
     public: !!isPublic, // public rooms appear in the room list and in Quick Match
     createdAt: Date.now(),
     matchNo: 1,
@@ -216,7 +222,7 @@ function roomCard(room) {
     code: room.code,
     host: full ? `${seatName(room.seats[1])} vs ${seatName(room.seats[2])}` : seatName(host),
     rating: !full && host.user ? host.user.rating : null,
-    eclipse: room.eclipse,
+    mode: room.mode,
     players: full ? 2 : 1,
     open: !full,
   };
@@ -241,7 +247,8 @@ function snapshot(room, seat) {
     code: room.code,
     you: seat,
     matchNo: room.matchNo,
-    eclipse: room.eclipse,
+    mode: room.mode,
+    warning: !!room.warning,
     public: room.public,
     started: bothSeated(room),
     game: room.game,
@@ -281,14 +288,29 @@ function startTurnClock(room) {
   clearTimeout(room.clock);
   room.limitMs = 0;
   room.deadline = 0;
-  if (!room.eclipse || room.result || !bothSeated(room)) return;
-  room.limitMs = eclipseSeconds(room.round) * 1000;
+  room.warning = false;
+  if (room.result || !bothSeated(room)) return;
+  room.limitMs = room.mode === "ranked" ? eclipseSeconds(room.round) * 1000 : CASUAL_TURN_MS;
   room.deadline = Date.now() + room.limitMs + TURN_GRACE_MS;
-  room.clock = setTimeout(() => onTimeout(room), room.deadline - Date.now());
+  room.clock = setTimeout(() => (room.mode === "ranked" ? onTimeout(room) : onCasualTimeout(room)), room.deadline - Date.now());
 }
 
+/* Casual: the clock ran out. Warn the player and give them a short final
+   countdown. Only if that also runs out do they take a strike. */
+function onCasualTimeout(room) {
+  if (room.result || room.autoPlaying) return;
+  room.warning = true;
+  room.limitMs = CASUAL_WARN_MS;
+  room.deadline = Date.now() + CASUAL_WARN_MS;
+  room.clock = setTimeout(() => onTimeout(room), CASUAL_WARN_MS);
+  broadcast(room);
+}
+
+/* Out of time for real: lose a life (ranked) or take a strike (casual).
+   Three and the match is lost; otherwise a careful move is made for them. */
 function onTimeout(room) {
   if (room.result || room.autoPlaying) return;
+  room.warning = false;
   const who = room.game.turn;
   room.lives[who] -= 1;
   if (room.lives[who] <= 0) {
@@ -323,6 +345,7 @@ function finish(room, winner, reason) {
   room.result = { winner, reason };
   room.limitMs = 0;
   room.deadline = 0;
+  room.warning = false;
   room.autoPlaying = false;
   recordResult(room);
 }
@@ -396,10 +419,14 @@ wss.on("connection", (ws) => {
   ws.isAlive = true;
   ws.on("pong", () => (ws.isAlive = true));
 
+  const NEED_ACCOUNT = { t: "error", code: "account", msg: "Ranked matches need an account. Sign in, or play Casual as a guest." };
+
   const createRoom = (msg, user, isPublic) => {
+    const mode = msg.mode === "ranked" && isPublic ? "ranked" : "casual"; // private rooms are always casual
+    if (mode === "ranked" && !user) return send(ws, NEED_ACCOUNT);
     if (rooms.size >= MAX_ROOMS) return send(ws, { t: "error", code: "busy", msg: "The server is full right now. Try again soon." });
     if (ws.room) detach(ws);
-    const room = newRoom(msg.eclipse, isPublic);
+    const room = newRoom(mode, isPublic);
     const seat = crypto.randomInt(2) + 1; // the creator gets a random side
     const token = crypto.randomUUID();
     room.seats[seat] = { token, ws: null, goneAt: 0, user, guestName: cleanName(msg.name) };
@@ -421,6 +448,7 @@ wss.on("connection", (ws) => {
       }
     }
     // new player takes the empty seat
+    if (room.mode === "ranked" && !user) return send(ws, NEED_ACCOUNT);
     const free = !room.seats[1] ? 1 : !room.seats[2] ? 2 : 0;
     if (!free) return send(ws, { t: "error", code: "full", msg: "This match already has two players." });
     const token = crypto.randomUUID();
@@ -446,10 +474,12 @@ wss.on("connection", (ws) => {
 
       if (msg.t === "create") return createRoom(msg, user, msg.public);
       if (msg.t === "quick") {
-        // first open public room that isn't your own, otherwise open a new one
+        // first open room of that kind that isn't your own, otherwise open a new one
+        const mode = msg.mode === "ranked" ? "ranked" : "casual";
+        if (mode === "ranked" && !user) return send(ws, NEED_ACCOUNT);
         const open = openRooms().find((r) => {
           const host = r.seats[1] || r.seats[2];
-          return !(user && host.user && host.user.id === user.id);
+          return r.mode === mode && !(user && host.user && host.user.id === user.id);
         });
         return open ? joinRoom(open, { name: msg.name }, user) : createRoom(msg, user, true);
       }

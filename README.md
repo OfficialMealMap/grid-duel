@@ -41,9 +41,10 @@ Saving match results needs one secret, set on the host and never put in the code
 
 Without it the game runs normally, but wins, losses and ratings aren't saved.
 
-- **Accounts:** email + password, with a unique username. Guests can always play.
-- **Stats:** online matches only. Wins, losses, streaks and match history are saved for signed-in players. Rating (Elo, starts at 1000) changes only when both players are signed in.
-- **Play Online:** Quick Match joins the first open public room or opens one. Public rooms appear in the room list; private rooms are link or code only.
+- **Accounts:** email + password, with a unique username. Guests pick a display name and can play Casual.
+- **Ranked:** signed-in players only. Blitz clock (20 seconds a turn, shrinking each round to 4), 3 lives, and rating (Elo, starts at 1000) changes.
+- **Casual:** anyone. 45 seconds a turn; run out and you get a warning and 10 more seconds, then a strike and an automatic move. Three strikes loses. No rating; signed-in players get a separate casual record. Private rooms are always casual.
+- **Rooms:** one live list on the home page shows every public room, tagged Ranked or Casual.
 - **Database:** `supabase/schema.sql` is the full schema. Browsers can only read; only the server (with the secret key) can record results.
 
 ## How it fits together

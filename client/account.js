@@ -33,7 +33,7 @@ export async function accessToken() {
 
 export async function loadProfile(id) {
   if (!client || !id) return null;
-  const { data } = await client.from("profiles").select("id,username,rating,games,wins,losses,streak,best_streak").eq("id", id).maybeSingle();
+  const { data } = await client.from("profiles").select("id,username,rating,games,wins,losses,streak,best_streak,casual_wins,casual_losses").eq("id", id).maybeSingle();
   return data || null;
 }
 

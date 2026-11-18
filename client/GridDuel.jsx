@@ -364,6 +364,21 @@ const CSS = `
 @media (max-width: 720px) {
   .gd-home { grid-template-columns: 1fr; grid-template-areas: "hero" "left" "right"; gap: 16px; }
 }
+.gd-playrow.online { margin: 0 0 8px; }
+.gd-btn.stack { height: 58px; flex-direction: column; gap: 2px; padding: 0 8px; }
+.gd-btn.lockedbtn { background: rgba(242,169,59,.12); color: var(--sol) !important; border-color: rgba(242,169,59,.35); box-shadow: none; }
+.gd-btn.lockedbtn:hover:not(:disabled) { background: rgba(242,169,59,.2); box-shadow: none; }
+.gd-mtag { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 1px 6px; border-radius: 5px; margin-right: 7px; background: rgba(255,255,255,.07); color: var(--dim); }
+.gd-mtag.ranked { background: rgba(242,169,59,.16); color: var(--sol); }
+.gd-newroom { flex-wrap: wrap; }
+.gd-lives.strikes span.on { color: var(--danger); }
+.gd-lives.strikes span { font-weight: 700; }
+.gd-warn { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.gd-warn-in { width: min(320px, 86%); text-align: center; padding: 16px 18px; border-radius: 16px; background: rgba(20,10,16,.94); border: 1.5px solid var(--danger); box-shadow: 0 0 0 6px rgba(255,93,115,.12), 0 20px 50px rgba(0,0,0,.6); animation: gd-warnpop .35s cubic-bezier(.3,1.5,.5,1) both, gd-urgent .9s ease-in-out .35s infinite; }
+.gd-warn-in b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--danger); }
+.gd-warn-in strong { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 34px; line-height: 1.1; margin: 4px 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+.gd-warn-in small { font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+@keyframes gd-warnpop { from { transform: scale(.8); opacity: 0 } to { transform: none; opacity: 1 } }
 .gd-menu-foot { margin-top: 22px; color: var(--faint); font-size: 12.5px; text-align: center; }
 
 /* ---------- play screen ---------- */
@@ -541,7 +556,9 @@ const CSS = `
 
 const RULES = [
   ["◎", <><b>Win</b> by moving onto your opponent's square.</>],
-  ["☾", <><b>Eclipse Mode</b> (in Settings). The turn clock starts at 20 seconds and shrinks every round, down to 3. Run out and you lose one of 3 lives, and a careful move is made for you. Lose all 3 and you lose the match.</>],
+  ["★", <><b>Ranked</b> (online, signed in). A blitz clock starts at 20 seconds a turn and shrinks every round, down to 4. Run out and you lose one of 3 lives and a careful move is made for you. Lose all 3 and you lose. Your rating is on the line.</>],
+  ["◌", <><b>Casual</b> (online, anyone). 45 seconds a turn. Run out and you get a warning and 10 more seconds; miss that and you take a strike and a move is made for you. Three strikes and you lose. No rating.</>],
+  ["☾", <><b>Eclipse Mode</b> (in Settings) puts the ranked blitz clock on games against the computer and on the same screen.</>],
   ["✛", <><b>Step</b> one square up, down, left or right, never diagonally. Each step costs 1 energy.</>],
   ["↷", <><b>Corner jump.</b> From either pad beside your own spawn, hop straight to the other pad. Your base only.</>],
   ["⤺", <><b>No going back.</b> You can't step onto the square you just left, unless it captures or it's your only step.</>],
@@ -595,7 +612,7 @@ function SettingsModal({ onClose, eclipse, setEclipse, muted, setMuted, inMatch 
         <div className="gd-setting">
           <div>
             <b>☾ Eclipse Mode</b>
-            <p>Every turn is on a clock that starts at {ECLIPSE_SECONDS} seconds and gets shorter each round, down to {ECLIPSE_MIN}. Run out and you lose one of 3 lives, and a careful move is made for you. Lose all 3 and you lose the match.</p>
+            <p>For games against the computer and on the same screen. Every turn is on the ranked blitz clock: it starts at {ECLIPSE_SECONDS} seconds and gets shorter each round, down to {ECLIPSE_MIN}. Run out and you lose one of 3 lives. Online matches set their own clock.</p>
             {inMatch ? <small>Takes effect from your next match.</small> : null}
           </div>
           <Toggle on={eclipse} onChange={setEclipse} label="Eclipse Mode" />
@@ -720,7 +737,7 @@ function MiniBoard() {
 
 function RoomList({ rooms, onJoin }) {
   if (rooms === null) return <div className="gd-emptybox">Loading rooms…</div>;
-  if (rooms.length === 0) return <div className="gd-emptybox">No rooms yet.<br />Press Quick Match to open the first one.</div>;
+  if (rooms.length === 0) return <div className="gd-emptybox">No rooms yet.<br />Press Ranked or Casual to open the first one.</div>;
   return (
     <ul className="gd-table gd-roomtable">
       {rooms.map((r) => (
@@ -728,10 +745,10 @@ function RoomList({ rooms, onJoin }) {
           <span className="gd-roomcode">{r.code}</span>
           <span className="grow">
             <b>{r.host}{r.rating != null ? <i className="gold"> {r.rating}</i> : null}</b>
-            <small>{r.players}/2 · {r.open ? "waiting for a player" : "playing"}{r.eclipse ? " · ☾ Eclipse" : ""}</small>
+            <small><em className={`gd-mtag ${r.mode}`}>{r.mode === "ranked" ? "★ Ranked" : "Casual"}</em>{r.players}/2 · {r.open ? "waiting" : "playing"}</small>
           </span>
           {r.open ? (
-            <button className="gd-btn primary sm" onClick={() => { SFX.click(); onJoin(r.code); }}>Join</button>
+            <button className="gd-btn primary sm" onClick={() => { SFX.click(); onJoin(r.code, r.mode); }}>Join</button>
           ) : (
             <span className="gd-full">Full</span>
           )}
@@ -750,7 +767,14 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
   const nameRef = useRef(null);
   const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   const rate = pr && pr.games ? Math.round((pr.wins / pr.games) * 100) : 0;
-  const openCount = rooms ? rooms.filter((r) => r.open).length : 0;
+  const waiting = { ranked: 0, casual: 0 };
+  (rooms || []).forEach((r) => { if (r.open) waiting[r.mode] += 1; });
+  // ranked needs an account: guests get the sign-in box instead
+  const ranked = (fn) => () => {
+    SFX.click();
+    if (!signedIn) return onAccount();
+    fn();
+  };
 
   // online play needs a name: your account's, or one a guest types in
   const withName = (fn) => () => {
@@ -803,8 +827,8 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
             <h4>Your stats</h4>
             <div className="gd-statgrid" aria-hidden={!signedIn}>
               <div className="gd-stat"><b className="gold">{signedIn ? pr.rating : 1000}</b><span>Rating</span></div>
-              <div className="gd-stat"><b>{signedIn ? `${pr.wins}–${pr.losses}` : "0–0"}</b><span>Won–lost</span></div>
-              <div className="gd-stat"><b>{signedIn ? `${rate}%` : "0%"}</b><span>Win rate</span></div>
+              <div className="gd-stat"><b>{signedIn ? `${pr.wins}–${pr.losses}` : "0–0"}</b><span>Ranked W–L</span></div>
+              <div className="gd-stat"><b>{signedIn ? `${pr.casual_wins || 0}–${pr.casual_losses || 0}` : "0–0"}</b><span>Casual W–L</span></div>
               <div className="gd-stat"><b>{signedIn ? pr.best_streak : 0}</b><span>Best streak</span></div>
             </div>
             {!signedIn ? (
@@ -823,10 +847,16 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
         </Panel>
 
         <Panel title="Play now">
-          <button className="gd-btn primary lg block" onClick={withName(onQuick)}>
-            Quick Match
-            <small>{rooms === null ? "online" : openCount ? `${openCount} room${openCount === 1 ? "" : "s"} waiting` : "online · opens a room"}</small>
-          </button>
+          <div className="gd-playrow online">
+            <button className={`gd-btn primary lg stack${signedIn ? "" : " lockedbtn"}`} onClick={ranked(() => onQuick("ranked"))}>
+              {signedIn ? "★ Ranked" : "🔒 Ranked"}
+              <small>{signedIn ? (waiting.ranked ? `${waiting.ranked} waiting` : "blitz clock · rated") : "sign in to play"}</small>
+            </button>
+            <button className="gd-btn lg stack" onClick={withName(() => onQuick("casual"))}>
+              Casual
+              <small>{waiting.casual ? `${waiting.casual} waiting` : "relaxed · no rating"}</small>
+            </button>
+          </div>
           <div className="gd-playrow">
             <button className="gd-btn lg" onClick={() => { SFX.click(); onStart({ aiSide: 2, level, timer }); }}>vs Computer</button>
             <button className="gd-btn lg" onClick={() => { SFX.click(); onStart({ aiSide: 0, level, timer }); }}>Same Screen</button>
@@ -839,18 +869,19 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
               ))}
             </div>
           </div>
-          <button className={`gd-pill${eclipse ? " on" : ""}`} onClick={onSettings}>☾ Eclipse Mode {eclipse ? "on" : "off"}<span>Change</span></button>
+          <button className={`gd-pill${eclipse ? " on" : ""}`} onClick={onSettings}>☾ Eclipse clock offline: {eclipse ? "on" : "off"}<span>Change</span></button>
         </Panel>
       </div>
 
       <div className="gd-col right">
         <Panel title="Rooms" live action={<span className="gd-count">{rooms ? rooms.length : 0}</span>}>
-          <RoomList rooms={rooms} onJoin={(c) => withName(() => onJoin(c))()} />
+          <RoomList rooms={rooms} onJoin={(c, mode) => (mode === "ranked" ? ranked(() => onJoin(c))() : withName(() => onJoin(c))())} />
           <div className="gd-roomfoot">
             <div className="gd-newroom">
               <span>New room</span>
-              <button className="gd-btn sm" onClick={withName(() => onCreate(true))}>Public</button>
-              <button className="gd-btn sm" onClick={withName(() => onCreate(false))}>Private link</button>
+              <button className="gd-btn sm" onClick={ranked(() => onCreate(true, "ranked"))}>★ Ranked</button>
+              <button className="gd-btn sm" onClick={withName(() => onCreate(true, "casual"))}>Casual</button>
+              <button className="gd-btn sm" onClick={withName(() => onCreate(false, "casual"))}>Private link</button>
             </div>
             <form className="gd-joinrow" onSubmit={(e) => { e.preventDefault(); if (clean.length === 6) withName(() => onJoin(clean))(); }}>
               <input className="gd-input" value={clean} onChange={(e) => setCode(e.target.value)} placeholder="Have a code?" aria-label="Room code" />
@@ -936,7 +967,7 @@ function Lobby({ online, onCancel }) {
         </p>
         <div className="gd-facts">
           <span>You play <b style={{ color: SIDE[snap.you].color }}>{SIDE[snap.you].name}</b></span>
-          <span>{snap.eclipse ? "☾ Eclipse Mode" : "Classic"}</span>
+          <span>{snap.mode === "ranked" ? "★ Ranked · blitz clock" : "Casual · 45s turns"}</span>
           <span>Code <b className="mono">{snap.code}</b></span>
         </div>
         <div className="gd-linkbox">
@@ -1077,9 +1108,9 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     if (lastSeq.current >= 0 && L && seq === lastSeq.current + 1) {
       if (L.timeout) {
         SFX.timeout();
-        say(L.who, `ran out of time · lost a life (${L.livesLeft} left) · auto-move`);
+        say(L.who, casual ? `ran out of time · strike ${LIVES - L.livesLeft} of ${LIVES} · auto-move` : `ran out of time · lost a life (${L.livesLeft} left) · auto-move`);
         const id = Math.random();
-        setSplash({ id, p: L.who, text: `Time's up · ${L.livesLeft} ${L.livesLeft === 1 ? "life" : "lives"} left` });
+        setSplash({ id, p: L.who, text: casual ? `Strike ${LIVES - L.livesLeft} of ${LIVES}` : `Time's up · ${L.livesLeft} ${L.livesLeft === 1 ? "life" : "lives"} left` });
         setTimeout(() => setSplash((x) => (x && x.id === id ? null : x)), 900);
       } else if (L.action) {
         playFx(before, L.action, online.game);
@@ -1087,7 +1118,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     }
     if (online.result && !before.winner) {
       const r = online.result;
-      if (r.reason === "time") say(foeOf(r.winner), "ran out of time with no lives left");
+      if (r.reason === "time") say(foeOf(r.winner), casual ? "took a third strike" : "ran out of time with no lives left");
       if (r.reason === "left") say(foeOf(r.winner), "left the match");
       if (r.reason === "resign") say(foeOf(r.winner), "resigned");
     }
@@ -1145,10 +1176,12 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
 
   /* turn clock: humans only, starts after the turn splash, pauses while rules are open */
   const limit = online ? online.limitMs : config.timer ? eclipseSeconds(round) * 1000 : 0;
-  const urgentAt = Math.min(5000, limit * 0.4);
+  const urgentAt = online && online.warning ? limit : Math.min(5000, limit * 0.4);
   const [left, setLeft] = useState(limit);
   const [autoL, setAutoPlaying] = useState(false);
   const LIVES = 3;
+  const casual = !!online && online.mode !== "ranked";
+  const warned = !!online && !!online.warning && !online.result; // casual: final countdown before a strike
   const [livesL, setLives] = useState({ 1: LIVES, 2: LIVES });
   const [forfeitL, setForfeit] = useState(0); // the player who ran out of lives
   // online, these all come from the server
@@ -1311,6 +1344,8 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   const foeSeat = online ? foeOf(seat) : 0;
   const hint = s.winner
     ? ""
+    : warned && s.turn !== seat
+    ? <>Your opponent is out of time and has been warned. They must move or take a strike.</>
     : online && away(foeSeat)
     ? <>Your opponent lost connection. If they aren't back within 90 seconds, you win.</>
     : online && s.turn !== seat
@@ -1330,7 +1365,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   const overLine = !s.winner
     ? ""
     : forfeit
-    ? `${SIDE[forfeit].name} ran out of time · round ${round}`
+    ? `${SIDE[forfeit].name} ${casual ? "took three strikes" : "ran out of time"} · round ${round}`
     : result && result.reason === "left"
     ? `${SIDE[foeOf(s.winner)].name} left the match · round ${round}`
     : result && result.reason === "resign"
@@ -1351,7 +1386,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     <div className="gd-play" style={{ "--turn": SIDE[p].color }}>
       <div className="gd-top">
         <button className="gd-iconbtn" onClick={leave} aria-label={online ? "Leave match" : "Back to menu"}>{online ? "← Leave" : "← Menu"}</button>
-        <div className="gd-round">Round <b>{round}</b>{limit ? <span className="gd-modechip">☾ Eclipse · {limit / 1000}s</span> : null}</div>
+        <div className="gd-round">Round <b>{round}</b>{online ? <span className="gd-modechip">{casual ? "Casual" : `★ Ranked · ${limit / 1000}s`}</span> : limit ? <span className="gd-modechip">☾ Eclipse · {limit / 1000}s</span> : null}</div>
         <div className="gd-topr">
           <button className="gd-iconbtn" onClick={onRules} aria-label="How to play">?</button>
           <button className="gd-iconbtn" onClick={onSettings} aria-label="Settings">⚙</button>
@@ -1362,7 +1397,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
         {[1, 2].map((id, idx) => {
           const live = p === id && !s.winner;
           const total = s.energy[id];
-          const timed = limit > 0 && aiSide !== id;
+          const timed = online ? true : limit > 0 && aiSide !== id;
           const frac = live && timed ? left / limit : 1;
           const urgent = live && timed && !autoPlaying && left <= urgentAt;
           return (
@@ -1383,11 +1418,19 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                   <small>{status(id)}</small>
                 </span>
                 {timed ? (
-                  <span className="gd-lives" title={`${lives[id]} of ${LIVES} timeout lives left`}>
-                    {Array.from({ length: LIVES }).map((_, i) => (
-                      <span key={i} className={i < lives[id] ? "on" : ""}>♥</span>
-                    ))}
-                  </span>
+                  casual ? (
+                    <span className="gd-lives strikes" title={`${LIVES - lives[id]} of ${LIVES} strikes`}>
+                      {Array.from({ length: LIVES }).map((_, i) => (
+                        <span key={i} className={i < LIVES - lives[id] ? "on" : ""}>✕</span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="gd-lives" title={`${lives[id]} of ${LIVES} timeout lives left`}>
+                      {Array.from({ length: LIVES }).map((_, i) => (
+                        <span key={i} className={i < lives[id] ? "on" : ""}>♥</span>
+                      ))}
+                    </span>
+                  )
                 ) : null}
                 <span className="gd-orbsrow" title={live ? `${s.ctx.pool} of ${total} energy left` : `${total} energy next turn`}>
                   {Array.from({ length: total }).map((_, i) => (
@@ -1518,10 +1561,20 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
             />
           ) : null}
 
+          {warned && s.turn === seat && !autoPlaying ? (
+            <div className="gd-warn" role="alert">
+              <div className="gd-warn-in">
+                <b>Your move!</b>
+                <strong>{secs}</strong>
+                <small>Move now, or you take strike {LIVES - lives[seat] + 1} of {LIVES} and a move is made for you.{LIVES - lives[seat] + 1 === LIVES ? " A third strike loses the match." : ""}</small>
+              </div>
+            </div>
+          ) : null}
+
           {splash && !s.winner ? (
             <div className="gd-splash" key={splash.id} style={{ color: SIDE[splash.p].color }}>
               <div className="gd-splash-in">
-                <small>Round {round}{limit && !splash.text ? ` · ${limit / 1000}s per turn` : ""}</small>
+                <small>Round {round}{limit && !splash.text && !warned ? ` · ${limit / 1000}s per turn` : ""}</small>
                 <b>{splash.text || (online ? (splash.p === seat ? "Your turn" : "Opponent's turn") : aiSide === splash.p ? `${SIDE[splash.p].name} moves` : vsAI ? "Your turn" : `${SIDE[splash.p].name}'s turn`)}</b>
               </div>
             </div>
@@ -1548,7 +1601,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                 {result && result.ratings ? (
                   <>Rating <b className={result.ratings[seat] >= 0 ? "up" : "down"}>{result.ratings[seat] >= 0 ? "+" : ""}{result.ratings[seat]}</b></>
                 ) : result && result.saved ? (
-                  online.players[seat].signedIn ? <>Saved to your stats. Rating only changes when both players are signed in.</> : <>Sign in to track your stats.</>
+                  online.players[seat].signedIn ? <>Casual match: added to your casual record. Rating only changes in Ranked.</> : <>Sign in to track your stats.</>
                 ) : !online.players[seat].signedIn ? (
                   <>Sign in before a match to track your stats.</>
                 ) : null}
@@ -1704,7 +1757,7 @@ function ProfileModal({ profile, onClose }) {
         <h2>{profile.username}</h2>
         <div className="gd-statgrid">
           <div className="gd-stat"><b style={{ color: "var(--sol)" }}>{profile.rating}</b><span>Rating</span></div>
-          <div className="gd-stat"><b>{profile.wins}–{profile.losses}</b><span>Won–lost</span></div>
+          <div className="gd-stat"><b>{profile.wins}–{profile.losses}</b><span>Ranked W–L</span></div>
           <div className="gd-stat"><b>{rate}%</b><span>Win rate</span></div>
           <div className="gd-stat"><b>{profile.best_streak}</b><span>Best streak</span></div>
         </div>
@@ -1722,8 +1775,8 @@ function ProfileModal({ profile, onClose }) {
               return (
                 <li key={m.id}>
                   <b className={won ? "w" : "l"}>{won ? "Win" : "Loss"}</b>
-                  <span className="grow">vs <b>{foe ? foe.username : "Guest"}</b> · {reason[m.reason]} · round {m.rounds}{m.eclipse ? " · ☾" : ""}</span>
-                  <span className={`num ${delta > 0 ? "w" : delta < 0 ? "l" : ""}`}>{m.rated ? (delta >= 0 ? "+" : "") + delta : "–"}</span>
+                  <span className="grow">vs <b>{foe ? foe.username : "Guest"}</b> · {reason[m.reason]} · round {m.rounds}{m.rated ? " · ranked" : " · casual"}</span>
+                  <span className={`num ${delta > 0 ? "w" : delta < 0 ? "l" : ""}`}>{m.rated ? (delta >= 0 ? "+" : "") + delta : ""}</span>
                 </li>
               );
             })}
@@ -1833,8 +1886,8 @@ export default function GridDuel() {
       if (!w || wsRef.current !== ws) return ws.close();
       if (ws.readyState !== 1) return;
       if (w.code) ws.send(JSON.stringify({ t: "join", code: w.code, token: loadToken(w.code), auth, name }));
-      else if (w.quick) ws.send(JSON.stringify({ t: "quick", eclipse: w.eclipse, auth, name }));
-      else ws.send(JSON.stringify({ t: "create", eclipse: w.eclipse, public: w.public, auth, name }));
+      else if (w.quick) ws.send(JSON.stringify({ t: "quick", mode: w.mode, auth, name }));
+      else ws.send(JSON.stringify({ t: "create", mode: w.mode, public: w.public, auth, name }));
     };
     ws.onmessage = (ev) => {
       let m;
@@ -1973,8 +2026,8 @@ export default function GridDuel() {
         onAccount={openAcct}
         guestName={guestName}
         setGuestName={setGuestName}
-        onQuick={() => goOnline({ quick: true, eclipse })}
-        onCreate={(isPublic) => goOnline({ create: true, eclipse, public: isPublic })}
+        onQuick={(mode) => goOnline({ quick: true, mode })}
+        onCreate={(isPublic, mode) => goOnline({ create: true, mode, public: isPublic })}
         onJoin={(code) => goOnline({ code })}
       />
     );
