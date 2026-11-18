@@ -21,8 +21,8 @@ const LIVES = 3;
 const TURN_GRACE_MS = 1000; // covers the "your turn" splash and network lag
 const ABANDON_MS = 90_000; // a player who stays disconnected this long loses
 const ROOM_IDLE_MS = 60 * 60_000; // empty or finished rooms are cleared after an hour
-const CASUAL_TURN_MS = Number(process.env.CASUAL_TURN_MS) || 45_000; // casual: a slow, fixed turn clock
-const CASUAL_WARN_MS = Number(process.env.CASUAL_WARN_MS) || 10_000; // then a warning; move within this or take a strike
+const CASUAL_TURN_MS = Number(process.env.CASUAL_TURN_MS) || 30_000; // casual: a slow, fixed turn clock
+const CASUAL_WARN_MS = Number(process.env.CASUAL_WARN_MS) || 5_000; // then a red final countdown; no move by the end forfeits
 const AUTO_BEAT_MS = 380; // pace of a timed-out player's automatic move
 const MAX_ROOMS = 5000;
 
@@ -153,7 +153,7 @@ function newCode() {
 
 /* Two kinds of online match:
    ranked  signed-in players only, blitz clock that speeds up, rating changes
-   casual  anyone, slow fixed clock with a warning before each strike, no rating */
+   casual  anyone, slow fixed clock, then a final countdown and a forfeit, no rating */
 function newRoom(mode, isPublic) {
   const room = {
     code: newCode(),
@@ -296,7 +296,7 @@ function startTurnClock(room) {
 }
 
 /* Casual: the clock ran out. Warn the player and give them a short final
-   countdown. Only if that also runs out do they take a strike. */
+   countdown. If that also runs out, they forfeit the match. */
 function onCasualTimeout(room) {
   if (room.result || room.autoPlaying) return;
   room.warning = true;
@@ -306,12 +306,16 @@ function onCasualTimeout(room) {
   broadcast(room);
 }
 
-/* Out of time for real: lose a life (ranked) or take a strike (casual).
-   Three and the match is lost; otherwise a careful move is made for them. */
+/* Out of time for real. Casual: forfeit. Ranked: lose a life; at zero the
+   match is lost, otherwise a careful move is made for them. */
 function onTimeout(room) {
   if (room.result || room.autoPlaying) return;
   room.warning = false;
   const who = room.game.turn;
+  if (room.mode !== "ranked") {
+    finish(room, foeOf(who), "time");
+    return broadcast(room);
+  }
   room.lives[who] -= 1;
   if (room.lives[who] <= 0) {
     finish(room, foeOf(who), "time");

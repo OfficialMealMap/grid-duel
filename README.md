@@ -43,7 +43,7 @@ Without it the game runs normally, but wins, losses and ratings aren't saved.
 
 - **Accounts:** email + password, with a unique username. Guests pick a display name and can play Casual.
 - **Ranked:** signed-in players only. Blitz clock (20 seconds a turn, shrinking each round to 4), 3 lives, and rating (Elo, starts at 1000) changes.
-- **Casual:** anyone. 45 seconds a turn; run out and you get a warning and 10 more seconds, then a strike and an automatic move. Three strikes loses. No rating; signed-in players get a separate casual record. Private rooms are always casual.
+- **Casual:** anyone. 30 seconds a turn; run out and the board pulses red with a 5-second countdown, and if you still haven't moved you forfeit. No rating; signed-in players get a separate casual record. Private rooms are always casual.
 - **Rooms:** one live list on the home page shows every public room, tagged Ranked or Casual.
 - **Database:** `supabase/schema.sql` is the full schema. Browsers can only read; only the server (with the secret key) can record results.
 

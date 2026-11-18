@@ -373,10 +373,16 @@ const CSS = `
 .gd-newroom { flex-wrap: wrap; }
 .gd-lives.strikes span.on { color: var(--danger); }
 .gd-lives.strikes span { font-weight: 700; }
-.gd-warn { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.gd-warn-in { width: min(320px, 86%); text-align: center; padding: 16px 18px; border-radius: 16px; background: rgba(20,10,16,.94); border: 1.5px solid var(--danger); box-shadow: 0 0 0 6px rgba(255,93,115,.12), 0 20px 50px rgba(0,0,0,.6); animation: gd-warnpop .35s cubic-bezier(.3,1.5,.5,1) both, gd-urgent .9s ease-in-out .35s infinite; }
-.gd-warn-in b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--danger); }
-.gd-warn-in strong { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 34px; line-height: 1.1; margin: 4px 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+.gd-warn { position: absolute; left: 0; right: 0; top: -6px; z-index: 9; display: flex; justify-content: center; pointer-events: none; }
+.gd-stage.warned { animation: gd-redpulse .7s ease-in-out infinite; }
+.gd-stage.warned::after { box-shadow: 0 0 0 2px var(--danger), 0 0 50px rgba(255,93,115,.45); }
+@keyframes gd-redpulse { 0%,100% { box-shadow: 0 30px 60px rgba(0,0,0,.45), 0 0 0 0 rgba(255,93,115,.55) } 50% { box-shadow: 0 30px 60px rgba(0,0,0,.45), 0 0 0 14px rgba(255,93,115,0) } }
+.gd-setting.col { flex-direction: column; align-items: stretch; gap: 10px; }
+.gd-setting.col p { margin: 0; }
+.gd-playrow.last { margin-bottom: 0; }
+.gd-warn-in { display: flex; align-items: center; gap: 12px; text-align: left; padding: 8px 16px; border-radius: 16px; background: rgba(20,10,16,.94); border: 1.5px solid var(--danger); box-shadow: 0 0 0 6px rgba(255,93,115,.12), 0 20px 50px rgba(0,0,0,.6); animation: gd-warnpop .35s cubic-bezier(.3,1.5,.5,1) both, gd-urgent .9s ease-in-out .35s infinite; }
+.gd-warn-in b { display: block; font-size: 16px; white-space: nowrap; font-weight: 700; letter-spacing: -.02em; color: var(--danger); }
+.gd-warn-in strong { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 30px; line-height: 1; min-width: 1ch; color: var(--ink); font-variant-numeric: tabular-nums; }
 .gd-warn-in small { font-size: 12.5px; line-height: 1.45; color: var(--dim); }
 @keyframes gd-warnpop { from { transform: scale(.8); opacity: 0 } to { transform: none; opacity: 1 } }
 .gd-menu-foot { margin-top: 22px; color: var(--faint); font-size: 12.5px; text-align: center; }
@@ -557,8 +563,8 @@ const CSS = `
 const RULES = [
   ["◎", <><b>Win</b> by moving onto your opponent's square.</>],
   ["★", <><b>Ranked</b> (online, signed in). A blitz clock starts at 20 seconds a turn and shrinks every round, down to 4. Run out and you lose one of 3 lives and a careful move is made for you. Lose all 3 and you lose. Your rating is on the line.</>],
-  ["◌", <><b>Casual</b> (online, anyone). 45 seconds a turn. Run out and you get a warning and 10 more seconds; miss that and you take a strike and a move is made for you. Three strikes and you lose. No rating.</>],
-  ["☾", <><b>Eclipse Mode</b> (in Settings) puts the ranked blitz clock on games against the computer and on the same screen.</>],
+  ["◌", <><b>Casual</b> (online, anyone). 30 seconds a turn. Run out and the board pulses red with a 5-second countdown. If you still haven't moved, you forfeit. No rating.</>],
+  ["☾", <><b>Eclipse Mode</b> is an option when you start a game against the computer or on the same screen. It adds the ranked blitz clock.</>],
   ["✛", <><b>Step</b> one square up, down, left or right, never diagonally. Each step costs 1 energy.</>],
   ["↷", <><b>Corner jump.</b> From either pad beside your own spawn, hop straight to the other pad. Your base only.</>],
   ["⤺", <><b>No going back.</b> You can't step onto the square you just left, unless it captures or it's your only step.</>],
@@ -599,6 +605,46 @@ function Toggle({ on, onChange, label }) {
   );
 }
 
+/* Options chosen right before an offline game starts. */
+function SetupModal({ kind, level, setLevel, eclipse, setEclipse, onClose, onStart }) {
+  useEffect(() => {
+    const h = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  const about = { easy: "Makes mistakes often. Good for learning.", normal: "Thinks a move ahead and slips now and then.", hard: "Thinks further ahead and doesn't blunder." };
+  return (
+    <div className="gd-modal" onClick={onClose}>
+      <div className="gd-modal-card" style={{ width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Game setup">
+        <p className="gd-eyebrow" style={{ margin: "0 0 6px" }}>{kind === "computer" ? "Versus computer" : "Same screen · two players"}</p>
+        <h2>Set up your game</h2>
+        {kind === "computer" ? (
+          <div className="gd-setting col">
+            <b>Difficulty</b>
+            <div className="gd-seg">
+              {["easy", "normal", "hard"].map((l) => (
+                <button key={l} className={l === level ? "on" : ""} onClick={() => { SFX.click(); setLevel(l); }}>{l}</button>
+              ))}
+            </div>
+            <p>{about[level]}</p>
+          </div>
+        ) : null}
+        <div className="gd-setting">
+          <div>
+            <b>☾ Eclipse Mode</b>
+            <p>Adds the blitz clock: {ECLIPSE_SECONDS} seconds a turn, shrinking each round to {ECLIPSE_MIN}. Run out and you lose one of 3 lives.</p>
+          </div>
+          <Toggle on={eclipse} onChange={setEclipse} label="Eclipse Mode" />
+        </div>
+        <div className="gd-over-btns" style={{ marginTop: 18 }}>
+          <button className="gd-cta" style={{ flex: "2 1 0", whiteSpace: "nowrap" }} onClick={() => { SFX.click(); onStart(); }}>Start game</button>
+          <button className="gd-cta ghost" style={{ flex: "1 1 0" }} onClick={onClose}>Back</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SettingsModal({ onClose, eclipse, setEclipse, muted, setMuted, inMatch }) {
   useEffect(() => {
     const h = (e) => e.key === "Escape" && onClose();
@@ -609,14 +655,6 @@ function SettingsModal({ onClose, eclipse, setEclipse, muted, setMuted, inMatch 
     <div className="gd-modal" onClick={onClose}>
       <div className="gd-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Settings">
         <h2>Settings</h2>
-        <div className="gd-setting">
-          <div>
-            <b>☾ Eclipse Mode</b>
-            <p>For games against the computer and on the same screen. Every turn is on the ranked blitz clock: it starts at {ECLIPSE_SECONDS} seconds and gets shorter each round, down to {ECLIPSE_MIN}. Run out and you lose one of 3 lives. Online matches set their own clock.</p>
-            {inMatch ? <small>Takes effect from your next match.</small> : null}
-          </div>
-          <Toggle on={eclipse} onChange={setEclipse} label="Eclipse Mode" />
-        </div>
         <div className="gd-setting">
           <div>
             <b>Sound</b>
@@ -758,7 +796,7 @@ function RoomList({ rooms, onJoin }) {
   );
 }
 
-function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, onLeaders, account, onAccount, guestName, setGuestName, onQuick, onCreate, onJoin }) {
+function Home({ onSetup, onRules, onLeaders, account, onAccount, guestName, setGuestName, onQuick, onCreate, onJoin }) {
   const rooms = useOpenRooms();
   const pr = account.profile;
   const signedIn = !!pr;
@@ -767,8 +805,6 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
   const nameRef = useRef(null);
   const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   const rate = pr && pr.games ? Math.round((pr.wins / pr.games) * 100) : 0;
-  const waiting = { ranked: 0, casual: 0 };
-  (rooms || []).forEach((r) => { if (r.open) waiting[r.mode] += 1; });
   // ranked needs an account: guests get the sign-in box instead
   const ranked = (fn) => () => {
     SFX.click();
@@ -815,11 +851,11 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
                 className={`gd-input${nameErr ? " err" : ""}`}
                 value={guestName}
                 maxLength={16}
-                placeholder="Pick a name to play online"
+                placeholder="Pick a name to play"
                 onChange={(e) => { setGuestName(e.target.value); setNameErr(false); }}
                 aria-invalid={nameErr}
               />
-              {nameErr ? <em role="alert">Enter a name (at least 2 characters) to play online.</em> : null}
+              {nameErr ? <em role="alert">Enter a name (at least 2 characters) to play.</em> : null}
             </label>
           )}
 
@@ -850,26 +886,23 @@ function Home({ level, setLevel, timer, eclipse, onStart, onSettings, onRules, o
           <div className="gd-playrow online">
             <button className={`gd-btn primary lg stack${signedIn ? "" : " lockedbtn"}`} onClick={ranked(() => onQuick("ranked"))}>
               {signedIn ? "★ Ranked" : "🔒 Ranked"}
-              <small>{signedIn ? (waiting.ranked ? `${waiting.ranked} waiting` : "blitz clock · rated") : "sign in to play"}</small>
+              <small>{signedIn ? "blitz clock · rated" : "sign in to play"}</small>
             </button>
             <button className="gd-btn lg stack" onClick={withName(() => onQuick("casual"))}>
               Casual
-              <small>{waiting.casual ? `${waiting.casual} waiting` : "relaxed · no rating"}</small>
+              <small>relaxed · no rating</small>
             </button>
           </div>
-          <div className="gd-playrow">
-            <button className="gd-btn lg" onClick={() => { SFX.click(); onStart({ aiSide: 2, level, timer }); }}>vs Computer</button>
-            <button className="gd-btn lg" onClick={() => { SFX.click(); onStart({ aiSide: 0, level, timer }); }}>Same Screen</button>
+          <div className="gd-playrow last">
+            <button className="gd-btn lg stack" onClick={withName(() => onSetup("computer"))}>
+              vs Computer
+              <small>pick difficulty</small>
+            </button>
+            <button className="gd-btn lg stack" onClick={withName(() => onSetup("local"))}>
+              Same Screen
+              <small>two players</small>
+            </button>
           </div>
-          <div className="gd-optrow">
-            <span>Computer</span>
-            <div className="gd-seg">
-              {["easy", "normal", "hard"].map((l) => (
-                <button key={l} className={l === level ? "on" : ""} onClick={() => { SFX.click(); setLevel(l); }}>{l}</button>
-              ))}
-            </div>
-          </div>
-          <button className={`gd-pill${eclipse ? " on" : ""}`} onClick={onSettings}>☾ Eclipse clock offline: {eclipse ? "on" : "off"}<span>Change</span></button>
         </Panel>
       </div>
 
@@ -967,7 +1000,7 @@ function Lobby({ online, onCancel }) {
         </p>
         <div className="gd-facts">
           <span>You play <b style={{ color: SIDE[snap.you].color }}>{SIDE[snap.you].name}</b></span>
-          <span>{snap.mode === "ranked" ? "★ Ranked · blitz clock" : "Casual · 45s turns"}</span>
+          <span>{snap.mode === "ranked" ? "★ Ranked · blitz clock" : "Casual · 30s turns"}</span>
           <span>Code <b className="mono">{snap.code}</b></span>
         </div>
         <div className="gd-linkbox">
@@ -1118,7 +1151,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
     }
     if (online.result && !before.winner) {
       const r = online.result;
-      if (r.reason === "time") say(foeOf(r.winner), casual ? "took a third strike" : "ran out of time with no lives left");
+      if (r.reason === "time") say(foeOf(r.winner), casual ? "didn't move in time · forfeit" : "ran out of time with no lives left");
       if (r.reason === "left") say(foeOf(r.winner), "left the match");
       if (r.reason === "resign") say(foeOf(r.winner), "resigned");
     }
@@ -1345,7 +1378,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   const hint = s.winner
     ? ""
     : warned && s.turn !== seat
-    ? <>Your opponent is out of time and has been warned. They must move or take a strike.</>
+    ? <>Your opponent is out of time. If they don't move in the next few seconds, you win.</>
     : online && away(foeSeat)
     ? <>Your opponent lost connection. If they aren't back within 90 seconds, you win.</>
     : online && s.turn !== seat
@@ -1365,7 +1398,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
   const overLine = !s.winner
     ? ""
     : forfeit
-    ? `${SIDE[forfeit].name} ${casual ? "took three strikes" : "ran out of time"} · round ${round}`
+    ? `${SIDE[forfeit].name} ${casual ? "didn't move in time · forfeit" : "ran out of time"} · round ${round}`
     : result && result.reason === "left"
     ? `${SIDE[foeOf(s.winner)].name} left the match · round ${round}`
     : result && result.reason === "resign"
@@ -1418,13 +1451,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
                   <small>{status(id)}</small>
                 </span>
                 {timed ? (
-                  casual ? (
-                    <span className="gd-lives strikes" title={`${LIVES - lives[id]} of ${LIVES} strikes`}>
-                      {Array.from({ length: LIVES }).map((_, i) => (
-                        <span key={i} className={i < LIVES - lives[id] ? "on" : ""}>✕</span>
-                      ))}
-                    </span>
-                  ) : (
+                  casual ? null : (
                     <span className="gd-lives" title={`${lives[id]} of ${LIVES} timeout lives left`}>
                       {Array.from({ length: LIVES }).map((_, i) => (
                         <span key={i} className={i < lives[id] ? "on" : ""}>♥</span>
@@ -1443,7 +1470,7 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
         })}
       </div>
 
-      <div className="gd-stage">
+      <div className={`gd-stage${warned ? " warned" : ""}`}>
         <div ref={boardRef} className="gd-board">
           {Array.from({ length: ROWS }).map((_, r) =>
             Array.from({ length: COLS }).map((__, c) => {
@@ -1564,9 +1591,9 @@ function Match({ config, onMenu, onRematch, onRules, onSettings, paused, net }) 
           {warned && s.turn === seat && !autoPlaying ? (
             <div className="gd-warn" role="alert">
               <div className="gd-warn-in">
-                <b>Your move!</b>
                 <strong>{secs}</strong>
-                <small>Move now, or you take strike {LIVES - lives[seat] + 1} of {LIVES} and a move is made for you.{LIVES - lives[seat] + 1 === LIVES ? " A third strike loses the match." : ""}</small>
+                <span><b>Your move!</b>
+                <small>Move now or you forfeit the match.</small></span>
               </div>
             </div>
           ) : null}
@@ -1992,6 +2019,8 @@ export default function GridDuel() {
     setScreen(to);
   };
   const closeRules = useCallback(() => setRules(false), []);
+  const [setup, setSetup] = useState(null); // "computer" | "local": the pre-game options screen
+  const closeSetup = useCallback(() => setSetup(null), []);
   const closeSettings = useCallback(() => setSettings(false), []);
 
   const snap = online && online.snap;
@@ -2014,14 +2043,9 @@ export default function GridDuel() {
   if (screen === "menu" || screen === "hub") {
     body = shell(
       <Home
-        level={level}
-        setLevel={setLevel}
-        timer={timer}
-        eclipse={eclipse}
-        onSettings={() => setSettings(true)}
+        onSetup={setSetup}
         onRules={() => setRules(true)}
         onLeaders={() => setScreen("leaders")}
-        onStart={start}
         account={account}
         onAccount={openAcct}
         guestName={guestName}
@@ -2070,6 +2094,17 @@ export default function GridDuel() {
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       {body}
       {rules ? <RulesModal onClose={closeRules} /> : null}
+      {setup ? (
+        <SetupModal
+          kind={setup}
+          level={level}
+          setLevel={setLevel}
+          eclipse={eclipse}
+          setEclipse={setEclipse}
+          onClose={closeSetup}
+          onStart={() => { setSetup(null); start({ aiSide: setup === "computer" ? 2 : 0, level, timer }); }}
+        />
+      ) : null}
       {acctModal ? (account.profile ? <ProfileModal profile={account.profile} onClose={closeAcct} /> : account.userId ? null : <SignInModal onClose={closeAcct} />) : null}
       {settings ? (
         <SettingsModal
