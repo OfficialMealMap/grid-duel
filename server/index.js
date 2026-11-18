@@ -105,8 +105,63 @@ async function recordResult(room) {
 
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
 
+/* ---------------------------------------------------------------- safety
+   Limits that stop one visitor from crowding everyone else out, and the
+   security headers sent with every page. */
+const MAX_SOCKETS_PER_IP = 8; // a household on one connection still fits
+const MAX_MESSAGES_PER_5S = 40; // a real player sends a handful
+const MAX_ENTRIES_PER_MIN = 12; // room creates/joins per address per minute
+const socketsByIp = new Map();
+const entriesByIp = new Map();
+
+// Render (and most hosts) put the visitor's address first in x-forwarded-for.
+const ipOf = (req) => String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+
+function allowEntry(ip) {
+  const now = Date.now();
+  const recent = (entriesByIp.get(ip) || []).filter((t) => now - t < 60_000);
+  if (recent.length >= MAX_ENTRIES_PER_MIN) return false;
+  recent.push(now);
+  entriesByIp.set(ip, recent);
+  return true;
+}
+
+function securityHeaders(req) {
+  const host = req.headers.host || "";
+  return {
+    "content-security-policy": [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data:",
+      `connect-src 'self' ws://${host} wss://${host} ${SUPABASE_URL}`,
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; "),
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "strict-transport-security": "max-age=31536000",
+  };
+}
+
 const server = http.createServer((req, res) => {
-  const url = new URL(req.url, "http://x");
+  for (const [k, v] of Object.entries(securityHeaders(req))) res.setHeader(k, v);
+  let url;
+  let wanted;
+  try {
+    url = new URL(req.url, "http://x");
+    wanted = decodeURIComponent(url.pathname);
+  } catch (e) {
+    res.writeHead(400, { "content-type": "text/plain" });
+    return res.end("Bad request");
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.writeHead(405, { "content-type": "text/plain" });
+    return res.end("Method not allowed");
+  }
   if (url.pathname === "/health") {
     res.writeHead(200, { "content-type": "text/plain" });
     return res.end(`ok ${rooms.size} rooms`);
@@ -119,8 +174,8 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
     return res.end(JSON.stringify({ rooms: listedRooms().map(roomCard) }));
   }
-  let file = path.normalize(path.join(DIST, decodeURIComponent(url.pathname)));
-  if (!file.startsWith(DIST)) {
+  let file = path.normalize(path.join(DIST, wanted));
+  if (file !== DIST && !file.startsWith(DIST + path.sep)) {
     res.writeHead(403);
     return res.end();
   }
@@ -230,7 +285,7 @@ function roomCard(room) {
 
 /* A guest's chosen display name: letters, numbers, spaces and underscores. */
 function cleanName(v) {
-  const name = String(v || "").replace(/[^A-Za-z0-9_ ]/g, "").replace(/\s+/g, " ").trim().slice(0, 16);
+  const name = (typeof v === "string" ? v : "").replace(/[^A-Za-z0-9_ ]/g, "").replace(/\s+/g, " ").trim().slice(0, 16);
   return name.length >= 2 ? name : "";
 }
 
@@ -416,9 +471,27 @@ function detach(ws) {
 
 /* ------------------------------------------------------------- websocket */
 
-const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 4096 });
+const wss = new WebSocketServer({
+  server,
+  path: "/ws",
+  maxPayload: 4096,
+  // Only pages served by this site may open a game connection, and each
+  // address gets a limited number of them.
+  verifyClient: ({ req, origin }, done) => {
+    try {
+      if (origin && new URL(origin).host !== req.headers.host) return done(false, 403, "Forbidden");
+    } catch (e) {
+      return done(false, 403, "Forbidden");
+    }
+    if ((socketsByIp.get(ipOf(req)) || 0) >= MAX_SOCKETS_PER_IP) return done(false, 429, "Too many connections");
+    done(true);
+  },
+});
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws, req) => {
+  ws.ip = ipOf(req);
+  socketsByIp.set(ws.ip, (socketsByIp.get(ws.ip) || 0) + 1);
+  ws.msgTimes = [];
   ws.room = null;
   ws.isAlive = true;
   ws.on("pong", () => (ws.isAlive = true));
@@ -464,13 +537,14 @@ wss.on("connection", (ws) => {
     broadcast(room);
   };
 
-  ws.on("message", async (raw) => {
+  const onMessage = async (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch (e) { return; }
-    if (!msg || typeof msg.t !== "string") return;
+    if (!msg || typeof msg !== "object" || typeof msg.t !== "string") return;
 
     if (msg.t === "create" || msg.t === "join" || msg.t === "quick") {
       if (ws.entering) return; // one at a time per connection
+      if (!allowEntry(ws.ip)) return send(ws, { t: "error", code: "slow", msg: "You're starting rooms too quickly. Wait a minute and try again." });
       ws.entering = true;
       const user = await resolveUser(msg.auth);
       ws.entering = false;
@@ -487,7 +561,7 @@ wss.on("connection", (ws) => {
         });
         return open ? joinRoom(open, { name: msg.name }, user) : createRoom(msg, user, true);
       }
-      const room = rooms.get(String(msg.code || "").toUpperCase().trim());
+      const room = rooms.get(typeof msg.code === "string" ? msg.code.toUpperCase().trim().slice(0, 8) : "");
       if (!room) return send(ws, { t: "error", code: "missing", msg: "That match doesn't exist or has expired." });
       return joinRoom(room, msg, user);
     }
@@ -539,10 +613,30 @@ wss.on("connection", (ws) => {
       if (!bothSeated(room)) rooms.delete(room.code);
       return;
     }
+  };
+
+  ws.on("message", (raw) => {
+    // drop connections that flood the server
+    const now = Date.now();
+    ws.msgTimes = ws.msgTimes.filter((t) => now - t < 5000);
+    ws.msgTimes.push(now);
+    if (ws.msgTimes.length > MAX_MESSAGES_PER_5S) return ws.close(1008, "Too many messages");
+    // a bad message must never take the server down
+    onMessage(raw).catch((err) => console.error("message error:", err && err.message));
   });
 
-  ws.on("close", () => detach(ws));
+  ws.on("error", () => {});
+  ws.on("close", () => {
+    const left = (socketsByIp.get(ws.ip) || 1) - 1;
+    if (left <= 0) socketsByIp.delete(ws.ip);
+    else socketsByIp.set(ws.ip, left);
+    detach(ws);
+  });
 });
+
+// Last line of defence: log an unexpected error and keep every match running.
+process.on("uncaughtException", (err) => console.error("uncaught:", err));
+process.on("unhandledRejection", (err) => console.error("unhandled:", err));
 
 /* keep connections honest and clear out old rooms */
 setInterval(() => {
@@ -552,6 +646,7 @@ setInterval(() => {
     try { ws.ping(); } catch (e) { /* ignore */ }
   }
   const now = Date.now();
+  for (const [ip, times] of entriesByIp) if (!times.some((t) => now - t < 60_000)) entriesByIp.delete(ip);
   for (const [code, room] of rooms) {
     const anyone = [1, 2].some((s) => room.seats[s] && room.seats[s].ws);
     if (!anyone && now - room.touched > ROOM_IDLE_MS / 6) rooms.delete(code);
