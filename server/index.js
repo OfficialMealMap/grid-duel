@@ -114,7 +114,7 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === "/api/rooms") {
     res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
-    return res.end(JSON.stringify({ rooms: openRooms().map(roomCard) }));
+    return res.end(JSON.stringify({ rooms: listedRooms().map(roomCard) }));
   }
   let file = path.normalize(path.join(DIST, decodeURIComponent(url.pathname)));
   if (!file.startsWith(DIST)) {
@@ -194,15 +194,38 @@ function openRooms() {
   return out.sort((a, b) => a.createdAt - b.createdAt);
 }
 
+const seatName = (seat) => (seat ? (seat.user ? seat.user.name : seat.guestName || "Guest") : null);
+
+/* Every public room that hasn't finished: open ones first, then matches in progress. */
+function listedRooms() {
+  const out = [];
+  for (const room of rooms.values()) {
+    if (!room.public || room.result) continue;
+    const host = room.seats[1] || room.seats[2];
+    if (!host) continue;
+    if (!bothSeated(room) && !host.ws) continue; // host walked away from an empty room
+    out.push(room);
+  }
+  return out.sort((a, b) => (bothSeated(a) ? 1 : 0) - (bothSeated(b) ? 1 : 0) || a.createdAt - b.createdAt).slice(0, 50);
+}
+
 function roomCard(room) {
   const host = room.seats[1] || room.seats[2];
+  const full = bothSeated(room);
   return {
     code: room.code,
-    host: host.user ? host.user.name : "Guest",
-    rating: host.user ? host.user.rating : null,
+    host: full ? `${seatName(room.seats[1])} vs ${seatName(room.seats[2])}` : seatName(host),
+    rating: !full && host.user ? host.user.rating : null,
     eclipse: room.eclipse,
-    waiting: Math.round((Date.now() - room.createdAt) / 1000),
+    players: full ? 2 : 1,
+    open: !full,
   };
+}
+
+/* A guest's chosen display name: letters, numbers, spaces and underscores. */
+function cleanName(v) {
+  const name = String(v || "").replace(/[^A-Za-z0-9_ ]/g, "").replace(/\s+/g, " ").trim().slice(0, 16);
+  return name.length >= 2 ? name : "";
 }
 
 /* ------------------------------------------------------------- messaging */
@@ -241,7 +264,8 @@ function playerInfo(seat) {
   return {
     seated: !!seat,
     connected: !!(seat && seat.ws),
-    name: seat && seat.user ? seat.user.name : null,
+    name: seatName(seat),
+    signedIn: !!(seat && seat.user),
     rating: seat && seat.user ? seat.user.rating : null,
   };
 }
@@ -378,7 +402,7 @@ wss.on("connection", (ws) => {
     const room = newRoom(msg.eclipse, isPublic);
     const seat = crypto.randomInt(2) + 1; // the creator gets a random side
     const token = crypto.randomUUID();
-    room.seats[seat] = { token, ws: null, goneAt: 0, user };
+    room.seats[seat] = { token, ws: null, goneAt: 0, user, guestName: cleanName(msg.name) };
     attach(room, seat, ws);
     send(ws, { t: "joined", code: room.code, seat, token });
     broadcast(room);
@@ -400,7 +424,7 @@ wss.on("connection", (ws) => {
     const free = !room.seats[1] ? 1 : !room.seats[2] ? 2 : 0;
     if (!free) return send(ws, { t: "error", code: "full", msg: "This match already has two players." });
     const token = crypto.randomUUID();
-    room.seats[free] = { token, ws: null, goneAt: 0, user };
+    room.seats[free] = { token, ws: null, goneAt: 0, user, guestName: cleanName(msg.name) };
     attach(room, free, ws);
     send(ws, { t: "joined", code, seat: free, token });
     room.startedAt = Date.now();
@@ -427,7 +451,7 @@ wss.on("connection", (ws) => {
           const host = r.seats[1] || r.seats[2];
           return !(user && host.user && host.user.id === user.id);
         });
-        return open ? joinRoom(open, {}, user) : createRoom(msg, user, true);
+        return open ? joinRoom(open, { name: msg.name }, user) : createRoom(msg, user, true);
       }
       const room = rooms.get(String(msg.code || "").toUpperCase().trim());
       if (!room) return send(ws, { t: "error", code: "missing", msg: "That match doesn't exist or has expired." });
